@@ -61,7 +61,23 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				ethra: {
+					DEFAULT: 'hsl(var(--ethra-primary))',
+					secondary: 'hsl(var(--ethra-secondary))',
 				}
+			},
+			backgroundImage: {
+				'ethra-gradient': 'var(--ethra-gradient)',
+			},
+			boxShadow: {
+				'ethra-glow': 'var(--ethra-glow)',
+			},
+			backgroundColor: {
+				glass: 'hsl(var(--glass))',
+			},
+			borderColor: {
+				glass: 'hsl(var(--glass-border))',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
