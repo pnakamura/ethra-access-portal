@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,35 +22,136 @@ const Auth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    // Check if this is a password recovery redirect
+    const type = searchParams.get('type');
+    const accessToken = searchParams.get('access_token');
+    const refreshToken = searchParams.get('refresh_token');
+
+    if (type === 'recovery' && accessToken && refreshToken) {
+      // Set the session from URL parameters
+      supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      }).then(({ data, error }) => {
+        if (error) {
+          console.error('Error setting session from recovery:', error);
+          toast({
+            title: "Erro na recuperação",
+            description: "Link de recuperação inválido ou expirado.",
+            variant: "destructive",
+          });
+        } else {
+          console.log('Recovery session set successfully');
+          setShowPasswordReset(true);
+        }
+      });
+    }
+
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth state change:', event, session?.user?.id);
+        
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Redirect authenticated users to home
-        if (session?.user) {
+        // Handle password recovery event
+        if (event === 'PASSWORD_RECOVERY') {
+          console.log('Password recovery event detected');
+          setShowPasswordReset(true);
+          return;
+        }
+        
+        // Redirect authenticated users to home (except during password reset)
+        if (session?.user && !showPasswordReset && event !== 'PASSWORD_RECOVERY') {
           navigate('/');
         }
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        navigate('/');
-      }
-    });
+    // Check for existing session only if not a recovery
+    if (type !== 'recovery') {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          navigate('/');
+        }
+      });
+    }
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, searchParams, showPasswordReset]);
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (newPassword !== confirmNewPassword) {
+      toast({
+        title: "Erro de validação",
+        description: "As senhas não coincidem.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "Erro de validação",
+        description: "A senha deve ter pelo menos 6 caracteres.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        toast({
+          title: "Erro na redefinição",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Senha redefinida com sucesso!",
+          description: "Sua nova senha foi salva. Você será redirecionado.",
+        });
+        
+        // Clear form
+        setNewPassword('');
+        setConfirmNewPassword('');
+        setShowPasswordReset(false);
+        
+        // Redirect to home after a short delay
+        setTimeout(() => {
+          navigate('/');
+        }, 2000);
+      }
+    } catch (error) {
+      toast({
+        title: "Erro inesperado",
+        description: "Ocorreu um erro ao redefinir a senha. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -211,13 +311,115 @@ const Auth = () => {
     }
   };
 
-  // Don't render auth form if user is already authenticated
-  if (user) {
+  // Don't render auth form if user is already authenticated and not resetting password
+  if (user && !showPasswordReset) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ethra mx-auto mb-4"></div>
           <p className="text-muted-foreground">Redirecionando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (showPasswordReset) {
+    return (
+      <div 
+        className="min-h-screen flex items-center justify-center relative overflow-hidden"
+        style={{
+          backgroundImage: `url(${ethraBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+        
+        {/* Content */}
+        <div className="relative z-10 w-full max-w-md p-6">
+          <Card className="backdrop-blur-lg bg-glass border-glass shadow-ethra-glow">
+            <CardHeader className="text-center space-y-4">
+              <div className="flex items-center justify-center space-x-2">
+                <Shield className="h-8 w-8 text-ethra" />
+                <CardTitle className="text-3xl font-bold bg-ethra-gradient bg-clip-text text-transparent">
+                  Ethra
+                </CardTitle>
+              </div>
+              <CardDescription className="text-muted-foreground">
+                Redefinir senha
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent>
+              <form onSubmit={handlePasswordReset} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">Nova senha</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="new-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="pl-10 pr-10"
+                      required
+                      minLength={6}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-new-password">Confirmar nova senha</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="confirm-new-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      className="pl-10"
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-ethra hover:bg-ethra/80"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Redefinindo..." : "Redefinir senha"}
+                  </Button>
+                  
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      setShowPasswordReset(false);
+                      navigate('/auth');
+                    }}
+                    className="w-full"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Cancelar
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
