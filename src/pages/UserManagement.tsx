@@ -15,7 +15,7 @@ import { Pencil, Trash2, UserPlus, AlertTriangle, Shield, ArrowLeft } from 'luci
 interface Usuario {
   id: string;
   nome_completo: string | null;
-  email?: string | null;
+  email: string | null;
   papel: string | null;
   tipo_usuario: 'cliente' | 'socio' | 'gestor' | 'dependente' | null;
   atualizado_em: string | null;
