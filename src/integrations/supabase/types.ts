@@ -718,6 +718,7 @@ export type Database = {
           admin_responsavel_id: string | null
           atualizado_em: string | null
           celular: string | null
+          email: string | null
           id: string
           nome_completo: string | null
           papel: string | null
@@ -730,6 +731,7 @@ export type Database = {
           admin_responsavel_id?: string | null
           atualizado_em?: string | null
           celular?: string | null
+          email?: string | null
           id: string
           nome_completo?: string | null
           papel?: string | null
@@ -742,6 +744,7 @@ export type Database = {
           admin_responsavel_id?: string | null
           atualizado_em?: string | null
           celular?: string | null
+          email?: string | null
           id?: string
           nome_completo?: string | null
           papel?: string | null

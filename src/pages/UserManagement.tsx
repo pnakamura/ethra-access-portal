@@ -15,12 +15,15 @@ import { Pencil, Trash2, UserPlus, AlertTriangle, Shield, ArrowLeft } from 'luci
 interface Usuario {
   id: string;
   nome_completo: string | null;
-  email: string | null;
-  papel: string;
-  tipo_usuario: string;
-  atualizado_em: string;
+  email?: string | null;
+  papel: string | null;
+  tipo_usuario: 'cliente' | 'socio' | 'gestor' | 'dependente' | null;
+  atualizado_em: string | null;
   celular?: string | null;
   peso_atual_kg?: number | null;
+  plano_id?: string | null;
+  whatsapp_id?: string | null;
+  admin_responsavel_id?: string | null;
 }
 
 export default function UserManagement() {
@@ -94,7 +97,7 @@ export default function UserManagement() {
     try {
       const { data: usuarios, error: usuariosError } = await supabase
         .from('usuarios')
-        .select('id, nome_completo, email, papel, tipo_usuario, atualizado_em, celular, peso_atual_kg')
+        .select('*')
         .order('atualizado_em', { ascending: false });
 
       if (usuariosError) throw usuariosError;
@@ -128,7 +131,7 @@ export default function UserManagement() {
           nome_completo: editingUsuario.nome_completo,
           email: editingUsuario.email,
           papel: editingUsuario.papel,
-          tipo_usuario: editingUsuario.tipo_usuario,
+          tipo_usuario: editingUsuario.tipo_usuario as 'cliente' | 'socio' | 'gestor' | 'dependente',
           celular: editingUsuario.celular,
           peso_atual_kg: editingUsuario.peso_atual_kg,
           atualizado_em: new Date().toISOString(),
@@ -245,11 +248,11 @@ export default function UserManagement() {
     window.location.href = '/';
   };
 
-  const getRoleBadgeVariant = (papel: string, tipoUsuario: string) => {
+  const getRoleBadgeVariant = (papel: string | null, tipoUsuario: string | null) => {
     return (papel === 'admin' || tipoUsuario === 'gestor') ? 'destructive' : 'secondary';
   };
 
-  const getRoleDisplayName = (papel: string, tipoUsuario: string) => {
+  const getRoleDisplayName = (papel: string | null, tipoUsuario: string | null) => {
     if (papel === 'admin' || tipoUsuario === 'gestor') {
       return 'Administrador';
     }
@@ -430,7 +433,7 @@ export default function UserManagement() {
                   </Label>
                   <select
                     id="papel"
-                    value={editingUsuario.papel}
+                    value={editingUsuario.papel || ''}
                     onChange={(e) =>
                       setEditingUsuario({
                         ...editingUsuario,
@@ -449,11 +452,11 @@ export default function UserManagement() {
                   </Label>
                   <select
                     id="tipo_usuario"
-                    value={editingUsuario.tipo_usuario}
+                    value={editingUsuario.tipo_usuario || ''}
                     onChange={(e) =>
                       setEditingUsuario({
                         ...editingUsuario,
-                        tipo_usuario: e.target.value,
+                        tipo_usuario: e.target.value as 'cliente' | 'socio' | 'gestor' | 'dependente',
                       })
                     }
                     className="col-span-3 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
