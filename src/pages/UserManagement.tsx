@@ -48,7 +48,7 @@ export default function UserManagement() {
       
       setUser(user);
 
-      // Get user profile
+      // Get user profile with role
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -62,21 +62,25 @@ export default function UserManagement() {
           description: "Falha ao verificar permissões do usuário",
           variant: "destructive",
         });
+        window.location.href = '/auth';
         return;
       }
 
-      // Temporarily allow access to all users until role system is fully implemented
-      const role = 'admin'; // Set as admin temporarily for testing
-
-      // Transform profile to include role
-      const profileWithRole = {
-        ...profile,
-        role: role
-      };
-
-      setUserProfile(profileWithRole);
-      const adminStatus = true; // Temporarily allow access for all users
-      setIsAdmin(adminStatus);
+      setUserProfile(profile);
+      
+      // Check if user is actually admin
+      const userIsAdmin = profile.role === 'admin';
+      setIsAdmin(userIsAdmin);
+      
+      if (!userIsAdmin) {
+        toast({
+          title: "Acesso Negado",
+          description: "Você não tem permissão para acessar esta página",
+          variant: "destructive",
+        });
+        window.location.href = '/';
+        return;
+      }
 
       await loadProfiles();
     } catch (error) {
@@ -87,21 +91,14 @@ export default function UserManagement() {
 
   const loadProfiles = async () => {
     try {
-      // Get profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, user_id, full_name, email, role, created_at, updated_at')
         .order('created_at', { ascending: false });
 
       if (profilesError) throw profilesError;
-
-      // For now, assign default role to all users since user_roles table isn't in types yet
-      const profilesWithRoles = (profiles || []).map(profile => ({
-        ...profile,
-        role: 'user' // Default role for all users for now
-      }));
       
-      setProfiles(profilesWithRoles);
+      setProfiles(profiles || []);
     } catch (error) {
       console.error('Erro ao carregar perfis:', error);
       toast({
@@ -123,18 +120,28 @@ export default function UserManagement() {
     if (!editingProfile || !isAdmin) return;
 
     try {
-      // Update profile basic info
+      // Update profile with role
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
           full_name: editingProfile.full_name,
           email: editingProfile.email,
+          role: editingProfile.role,
         })
         .eq('id', editingProfile.id);
 
       if (profileError) throw profileError;
 
-      // Note: Role update will be implemented when user_roles table is available in types
+      // Log admin action
+      await supabase.rpc('log_admin_action', {
+        action_type: 'UPDATE_USER',
+        target_user_id: editingProfile.user_id,
+        target_email: editingProfile.email,
+        action_details: {
+          updated_fields: ['full_name', 'email', 'role'],
+          new_role: editingProfile.role
+        }
+      });
 
       toast({
         title: "Sucesso",
@@ -174,23 +181,51 @@ export default function UserManagement() {
     }
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', deleteProfile.id);
+      // Get the current session for authorization
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Erro",
+          description: "Sessão expirada",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      if (error) throw error;
+      // Call the Edge Function to delete the user completely
+      const response = await fetch(`https://jjpajouvaovffcfjjqkf.supabase.co/functions/v1/delete-user`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: deleteProfile.user_id
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error('Error deleting user:', result);
+        toast({
+          title: "Erro",
+          description: result.error || "Erro ao excluir usuário",
+          variant: "destructive",
+        });
+        return;
+      }
 
       toast({
         title: "Sucesso",
-        description: "Usuário deletado com sucesso",
+        description: "Usuário excluído completamente do sistema",
       });
 
       setIsDeleteDialogOpen(false);
       setDeleteProfile(null);
       await loadProfiles();
     } catch (error) {
-      console.error('Erro ao deletar perfil:', error);
+      console.error('Erro ao deletar usuário:', error);
       toast({
         title: "Erro",
         description: "Falha ao deletar usuário",
