@@ -60,13 +60,13 @@ serve(async (req) => {
     }
 
     // Check if current user is admin
-    const { data: currentUserProfile, error: profileError } = await supabaseClient
-      .from('profiles')
-      .select('role')
-      .eq('user_id', user.id)
+    const { data: currentUser, error: userError } = await supabaseClient
+      .from('usuarios')
+      .select('papel, tipo_usuario')
+      .eq('id', user.id)
       .single()
 
-    if (profileError || currentUserProfile?.role !== 'admin') {
+    if (userError || (currentUser?.papel !== 'admin' && currentUser?.tipo_usuario !== 'gestor')) {
       return new Response(
         JSON.stringify({ error: 'Admin access required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -74,10 +74,10 @@ serve(async (req) => {
     }
 
     // Get target user info before deletion for audit log
-    const { data: targetProfile } = await supabaseClient
-      .from('profiles')
-      .select('email, full_name')
-      .eq('user_id', userId)
+    const { data: targetUser } = await supabaseClient
+      .from('usuarios')
+      .select('email, nome_completo')
+      .eq('id', userId)
       .single()
 
     // Log the admin action
@@ -87,9 +87,9 @@ serve(async (req) => {
         admin_user_id: user.id,
         action: 'DELETE_USER',
         target_user_id: userId,
-        target_email: targetProfile?.email,
+        target_email: targetUser?.email,
         details: { 
-          target_name: targetProfile?.full_name,
+          target_name: targetUser?.nome_completo,
           deleted_at: new Date().toISOString()
         }
       })

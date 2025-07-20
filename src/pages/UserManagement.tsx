@@ -12,25 +12,26 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Pencil, Trash2, UserPlus, AlertTriangle, Shield, ArrowLeft } from 'lucide-react';
 
-interface Profile {
+interface Usuario {
   id: string;
-  user_id: string;
-  full_name: string | null;
+  nome_completo: string | null;
   email: string | null;
-  role: string;
-  created_at: string;
-  updated_at: string;
+  papel: string;
+  tipo_usuario: string;
+  atualizado_em: string;
+  celular?: string | null;
+  peso_atual_kg?: number | null;
 }
 
 export default function UserManagement() {
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
-  const [deleteProfile, setDeleteProfile] = useState<Profile | null>(null);
+  const [editingUsuario, setEditingUsuario] = useState<Usuario | null>(null);
+  const [deleteUsuario, setDeleteUsuario] = useState<Usuario | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [userProfile, setUserProfile] = useState<Profile | null>(null);
+  const [userProfile, setUserProfile] = useState<Usuario | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
 
@@ -50,9 +51,9 @@ export default function UserManagement() {
 
       // Get user profile with role
       const { data: profile, error: profileError } = await supabase
-        .from('profiles')
+        .from('usuarios')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .single();
 
       if (profileError) {
@@ -69,7 +70,7 @@ export default function UserManagement() {
       setUserProfile(profile);
       
       // Check if user is actually admin
-      const userIsAdmin = profile.role === 'admin';
+      const userIsAdmin = profile.papel === 'admin' || profile.tipo_usuario === 'gestor';
       setIsAdmin(userIsAdmin);
       
       if (!userIsAdmin) {
@@ -82,28 +83,28 @@ export default function UserManagement() {
         return;
       }
 
-      await loadProfiles();
+      await loadUsuarios();
     } catch (error) {
       console.error('Erro na verificação de autenticação:', error);
       window.location.href = '/auth';
     }
   };
 
-  const loadProfiles = async () => {
+  const loadUsuarios = async () => {
     try {
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, user_id, full_name, email, role, created_at, updated_at')
-        .order('created_at', { ascending: false });
+      const { data: usuarios, error: usuariosError } = await supabase
+        .from('usuarios')
+        .select('id, nome_completo, email, papel, tipo_usuario, atualizado_em, celular, peso_atual_kg')
+        .order('atualizado_em', { ascending: false });
 
-      if (profilesError) throw profilesError;
+      if (usuariosError) throw usuariosError;
       
-      setProfiles(profiles || []);
+      setUsuarios(usuarios || []);
     } catch (error) {
-      console.error('Erro ao carregar perfis:', error);
+      console.error('Erro ao carregar usuários:', error);
       toast({
         title: "Erro",
-        description: "Falha ao carregar perfis de usuários",
+        description: "Falha ao carregar usuários",
         variant: "destructive",
       });
     } finally {
@@ -111,66 +112,71 @@ export default function UserManagement() {
     }
   };
 
-  const handleEdit = (profile: Profile) => {
-    setEditingProfile({ ...profile });
+  const handleEdit = (usuario: Usuario) => {
+    setEditingUsuario({ ...usuario });
     setIsEditDialogOpen(true);
   };
 
   const handleSaveEdit = async () => {
-    if (!editingProfile || !isAdmin) return;
+    if (!editingUsuario || !isAdmin) return;
 
     try {
-      // Update profile with role
-      const { error: profileError } = await supabase
-        .from('profiles')
+      // Update usuario with papel and tipo_usuario
+      const { error: usuarioError } = await supabase
+        .from('usuarios')
         .update({
-          full_name: editingProfile.full_name,
-          email: editingProfile.email,
-          role: editingProfile.role,
+          nome_completo: editingUsuario.nome_completo,
+          email: editingUsuario.email,
+          papel: editingUsuario.papel,
+          tipo_usuario: editingUsuario.tipo_usuario,
+          celular: editingUsuario.celular,
+          peso_atual_kg: editingUsuario.peso_atual_kg,
+          atualizado_em: new Date().toISOString(),
         })
-        .eq('id', editingProfile.id);
+        .eq('id', editingUsuario.id);
 
-      if (profileError) throw profileError;
+      if (usuarioError) throw usuarioError;
 
       // Log admin action
       await supabase.rpc('log_admin_action', {
         action_type: 'UPDATE_USER',
-        target_user_id: editingProfile.user_id,
-        target_email: editingProfile.email,
+        target_user_id: editingUsuario.id,
+        target_email: editingUsuario.email,
         action_details: {
-          updated_fields: ['full_name', 'email', 'role'],
-          new_role: editingProfile.role
+          updated_fields: ['nome_completo', 'email', 'papel', 'tipo_usuario'],
+          new_papel: editingUsuario.papel,
+          new_tipo_usuario: editingUsuario.tipo_usuario
         }
       });
 
       toast({
         title: "Sucesso",
-        description: "Perfil atualizado com sucesso",
+        description: "Usuário atualizado com sucesso",
       });
 
       setIsEditDialogOpen(false);
-      setEditingProfile(null);
-      await loadProfiles();
+      setEditingUsuario(null);
+      await loadUsuarios();
     } catch (error) {
       console.error('Erro ao atualizar perfil:', error);
       toast({
         title: "Erro",
-        description: "Falha ao atualizar perfil",
+        description: "Falha ao atualizar usuário",
         variant: "destructive",
       });
     }
   };
 
-  const handleDeleteClick = (profile: Profile) => {
-    setDeleteProfile(profile);
+  const handleDeleteClick = (usuario: Usuario) => {
+    setDeleteUsuario(usuario);
     setIsDeleteDialogOpen(true);
   };
 
   const handleConfirmDelete = async () => {
-    if (!deleteProfile || !isAdmin) return;
+    if (!deleteUsuario || !isAdmin) return;
 
     // Prevent admin from deleting their own account
-    if (deleteProfile.user_id === user?.id) {
+    if (deleteUsuario.id === user?.id) {
       toast({
         title: "Ação não permitida",
         description: "Você não pode deletar sua própria conta.",
@@ -200,7 +206,7 @@ export default function UserManagement() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: deleteProfile.user_id
+          userId: deleteUsuario.id
         }),
       });
 
@@ -222,8 +228,8 @@ export default function UserManagement() {
       });
 
       setIsDeleteDialogOpen(false);
-      setDeleteProfile(null);
-      await loadProfiles();
+      setDeleteUsuario(null);
+      await loadUsuarios();
     } catch (error) {
       console.error('Erro ao deletar usuário:', error);
       toast({
@@ -239,8 +245,15 @@ export default function UserManagement() {
     window.location.href = '/';
   };
 
-  const getRoleBadgeVariant = (role: string) => {
-    return role === 'admin' ? 'destructive' : 'secondary';
+  const getRoleBadgeVariant = (papel: string, tipoUsuario: string) => {
+    return (papel === 'admin' || tipoUsuario === 'gestor') ? 'destructive' : 'secondary';
+  };
+
+  const getRoleDisplayName = (papel: string, tipoUsuario: string) => {
+    if (papel === 'admin' || tipoUsuario === 'gestor') {
+      return 'Administrador';
+    }
+    return 'Cliente';
   };
 
   if (loading) {
@@ -284,10 +297,10 @@ export default function UserManagement() {
             {userProfile && (
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-sm text-muted-foreground">Logado como:</span>
-                <Badge variant={getRoleBadgeVariant(userProfile.role)}>
-                  {userProfile.role === 'admin' ? 'Administrador' : 'Usuário'}
+                <Badge variant={getRoleBadgeVariant(userProfile.papel, userProfile.tipo_usuario)}>
+                  {getRoleDisplayName(userProfile.papel, userProfile.tipo_usuario)}
                 </Badge>
-                <span className="text-sm font-medium">{userProfile.full_name || userProfile.email}</span>
+                <span className="text-sm font-medium">{userProfile.nome_completo || userProfile.email}</span>
               </div>
             )}
           </div>
@@ -305,11 +318,11 @@ export default function UserManagement() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UserPlus className="h-5 w-5" />
-              Lista de Usuários ({profiles.length})
+              Lista de Usuários ({usuarios.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {profiles.length === 0 ? (
+            {usuarios.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 Nenhum usuário encontrado
               </div>
@@ -326,37 +339,37 @@ export default function UserManagement() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {profiles.map((profile) => (
-                    <TableRow key={profile.id}>
+                  {usuarios.map((usuario) => (
+                    <TableRow key={usuario.id}>
                       <TableCell className="font-medium">
-                        {profile.full_name || 'Não informado'}
+                        {usuario.nome_completo || 'Não informado'}
                       </TableCell>
-                      <TableCell>{profile.email || 'Não informado'}</TableCell>
+                      <TableCell>{usuario.email || 'Não informado'}</TableCell>
                       <TableCell>
-                        <Badge variant={getRoleBadgeVariant(profile.role)}>
-                          {profile.role === 'admin' ? 'Administrador' : 'Usuário'}
+                        <Badge variant={getRoleBadgeVariant(usuario.papel, usuario.tipo_usuario)}>
+                          {getRoleDisplayName(usuario.papel, usuario.tipo_usuario)}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {new Date(profile.created_at).toLocaleDateString('pt-BR')}
+                        {usuario.atualizado_em ? new Date(usuario.atualizado_em).toLocaleDateString('pt-BR') : 'N/A'}
                       </TableCell>
                       <TableCell>
-                        {new Date(profile.updated_at).toLocaleDateString('pt-BR')}
+                        {usuario.atualizado_em ? new Date(usuario.atualizado_em).toLocaleDateString('pt-BR') : 'N/A'}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleEdit(profile)}
+                            onClick={() => handleEdit(usuario)}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={() => handleDeleteClick(profile)}
-                            disabled={profile.user_id === user?.id}
+                            onClick={() => handleDeleteClick(usuario)}
+                            disabled={usuario.id === user?.id}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -376,19 +389,19 @@ export default function UserManagement() {
             <DialogHeader>
               <DialogTitle>Editar Usuário</DialogTitle>
             </DialogHeader>
-            {editingProfile && (
+            {editingUsuario && (
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="full_name" className="text-right">
+                  <Label htmlFor="nome_completo" className="text-right">
                     Nome Completo
                   </Label>
                   <Input
-                    id="full_name"
-                    value={editingProfile.full_name || ''}
+                    id="nome_completo"
+                    value={editingUsuario.nome_completo || ''}
                     onChange={(e) =>
-                      setEditingProfile({
-                        ...editingProfile,
-                        full_name: e.target.value,
+                      setEditingUsuario({
+                        ...editingUsuario,
+                        nome_completo: e.target.value,
                       })
                     }
                     className="col-span-3"
@@ -401,10 +414,10 @@ export default function UserManagement() {
                   <Input
                     id="email"
                     type="email"
-                    value={editingProfile.email || ''}
+                    value={editingUsuario.email || ''}
                     onChange={(e) =>
-                      setEditingProfile({
-                        ...editingProfile,
+                      setEditingUsuario({
+                        ...editingUsuario,
                         email: e.target.value,
                       })
                     }
@@ -412,23 +425,58 @@ export default function UserManagement() {
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="role" className="text-right">
-                    Função
+                  <Label htmlFor="papel" className="text-right">
+                    Papel
                   </Label>
                   <select
-                    id="role"
-                    value={editingProfile.role}
+                    id="papel"
+                    value={editingUsuario.papel}
                     onChange={(e) =>
-                      setEditingProfile({
-                        ...editingProfile,
-                        role: e.target.value,
+                      setEditingUsuario({
+                        ...editingUsuario,
+                        papel: e.target.value,
                       })
                     }
                     className="col-span-3 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   >
-                    <option value="user">Usuário</option>
+                    <option value="cliente">Cliente</option>
                     <option value="admin">Administrador</option>
                   </select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="tipo_usuario" className="text-right">
+                    Tipo Usuário
+                  </Label>
+                  <select
+                    id="tipo_usuario"
+                    value={editingUsuario.tipo_usuario}
+                    onChange={(e) =>
+                      setEditingUsuario({
+                        ...editingUsuario,
+                        tipo_usuario: e.target.value,
+                      })
+                    }
+                    className="col-span-3 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="cliente">Cliente</option>
+                    <option value="gestor">Gestor</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="celular" className="text-right">
+                    Celular
+                  </Label>
+                  <Input
+                    id="celular"
+                    value={editingUsuario.celular || ''}
+                    onChange={(e) =>
+                      setEditingUsuario({
+                        ...editingUsuario,
+                        celular: e.target.value,
+                      })
+                    }
+                    className="col-span-3"
+                  />
                 </div>
               </div>
             )}
@@ -450,10 +498,10 @@ export default function UserManagement() {
                 Confirmar Exclusão
               </DialogTitle>
             </DialogHeader>
-            {deleteProfile && (
+            {deleteUsuario && (
               <div className="py-4">
                 <p className="text-sm text-muted-foreground mb-4">
-                  Tem certeza que deseja deletar o usuário <strong>{deleteProfile.full_name || deleteProfile.email}</strong>?
+                  Tem certeza que deseja deletar o usuário <strong>{deleteUsuario.nome_completo || deleteUsuario.email}</strong>?
                 </p>
                 <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3">
                   <p className="text-sm text-destructive font-medium">
