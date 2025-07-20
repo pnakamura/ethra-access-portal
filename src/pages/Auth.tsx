@@ -63,15 +63,8 @@ const Auth = () => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Handle password recovery event
-        if (event === 'PASSWORD_RECOVERY') {
-          console.log('Password recovery event detected');
-          setShowPasswordReset(true);
-          return;
-        }
-        
         // Redirect authenticated users to home (except during password reset)
-        if (session?.user && !showPasswordReset && event !== 'PASSWORD_RECOVERY') {
+        if (session?.user && !showPasswordReset) {
           navigate('/');
         }
       }
