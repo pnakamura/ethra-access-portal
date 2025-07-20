@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Shield, LogOut } from 'lucide-react';
+import { Shield, LogOut, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { User, Session } from '@supabase/supabase-js';
 import ethraBg from '@/assets/ethra-bg.jpg';
@@ -161,12 +161,17 @@ const Index = () => {
                 Visão geral do sistema e métricas principais
               </p>
             </div>
-            <div className="p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg">
-              <h3 className="text-lg font-semibold mb-2">Configurações</h3>
-              <p className="text-muted-foreground">
-                Gerenciar configurações do sistema
+            <Button 
+              onClick={() => navigate('/users')}
+              className="p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg hover:bg-glass/80 h-auto flex flex-col items-center space-y-2"
+              variant="ghost"
+            >
+              <Users className="h-8 w-8 text-ethra" />
+              <h3 className="text-lg font-semibold">Gerenciar Usuários</h3>
+              <p className="text-muted-foreground text-sm">
+                Visualizar, editar e deletar usuários do sistema
               </p>
-            </div>
+            </Button>
             <div className="p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg">
               <h3 className="text-lg font-semibold mb-2">Relatórios</h3>
               <p className="text-muted-foreground">
