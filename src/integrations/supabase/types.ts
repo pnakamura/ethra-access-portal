@@ -912,6 +912,10 @@ export type Database = {
         Args: { user_id?: string }
         Returns: boolean
       }
+      is_current_user: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
       log_admin_action: {
         Args: {
           action_type: string
