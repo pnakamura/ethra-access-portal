@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, EyeOff, Mail, Lock, User as UserIcon, Shield, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User as UserIcon, Shield, ArrowLeft, Phone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { User, Session } from '@supabase/supabase-js';
 import ethraBg from '@/assets/ethra-bg.jpg';
@@ -18,6 +18,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -28,6 +29,24 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+
+  // Função para formatar telefone no padrão brasileiro
+  const formatPhone = (value: string) => {
+    // Remove tudo que não é número
+    const numbers = value.replace(/\D/g, '');
+    
+    // Aplica a máscara (xx) xxxxxxxxx
+    if (numbers.length <= 11) {
+      return numbers.replace(/(\d{2})(\d{0,9})/, '($1) $2');
+    }
+    
+    return numbers.slice(0, 11).replace(/(\d{2})(\d{0,9})/, '($1) $2');
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formattedPhone = formatPhone(e.target.value);
+    setPhone(formattedPhone);
+  };
 
   useEffect(() => {
     // Check if this is a password recovery redirect
@@ -179,6 +198,7 @@ const Auth = () => {
           emailRedirectTo: redirectUrl,
           data: {
             full_name: fullName,
+            phone: phone,
           },
         },
       });
@@ -207,6 +227,7 @@ const Auth = () => {
         setPassword('');
         setConfirmPassword('');
         setFullName('');
+        setPhone('');
       }
     } catch (error) {
       toast({
@@ -607,21 +628,38 @@ const Auth = () => {
                     </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="email-signup">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="email-signup"
-                        type="email"
-                        placeholder="seu@email.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10"
-                        required
-                      />
-                    </div>
-                  </div>
+                   <div className="space-y-2">
+                     <Label htmlFor="phone">Telefone</Label>
+                     <div className="relative">
+                       <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                       <Input
+                         id="phone"
+                         type="tel"
+                         placeholder="(xx) xxxxxxxxx"
+                         value={phone}
+                         onChange={handlePhoneChange}
+                         className="pl-10"
+                         required
+                         maxLength={15}
+                       />
+                     </div>
+                   </div>
+                   
+                   <div className="space-y-2">
+                     <Label htmlFor="email-signup">Email</Label>
+                     <div className="relative">
+                       <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                       <Input
+                         id="email-signup"
+                         type="email"
+                         placeholder="seu@email.com"
+                         value={email}
+                         onChange={(e) => setEmail(e.target.value)}
+                         className="pl-10"
+                         required
+                       />
+                     </div>
+                   </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="password-signup">Senha</Label>
