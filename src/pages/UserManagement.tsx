@@ -16,7 +16,6 @@ interface Usuario {
   id: string;
   nome_completo: string | null;
   email: string | null;
-  papel: string | null;
   tipo_usuario: 'cliente' | 'socio' | 'gestor' | 'dependente' | null;
   atualizado_em: string | null;
   celular?: string | null;
@@ -73,7 +72,7 @@ export default function UserManagement() {
       setUserProfile(profile);
       
       // Check if user is actually admin
-      const userIsAdmin = profile.papel === 'admin' || profile.tipo_usuario === 'gestor';
+      const userIsAdmin = profile.tipo_usuario === 'gestor';
       setIsAdmin(userIsAdmin);
       
       if (!userIsAdmin) {
@@ -124,13 +123,12 @@ export default function UserManagement() {
     if (!editingUsuario || !isAdmin) return;
 
     try {
-      // Update usuario with papel and tipo_usuario
+      // Update usuario with tipo_usuario only
       const { error: usuarioError } = await supabase
         .from('usuarios')
         .update({
           nome_completo: editingUsuario.nome_completo,
           email: editingUsuario.email,
-          papel: editingUsuario.papel,
           tipo_usuario: editingUsuario.tipo_usuario as 'cliente' | 'socio' | 'gestor' | 'dependente',
           celular: editingUsuario.celular,
           peso_atual_kg: editingUsuario.peso_atual_kg,
@@ -146,8 +144,7 @@ export default function UserManagement() {
         target_user_id: editingUsuario.id,
         target_email: editingUsuario.email,
         action_details: {
-          updated_fields: ['nome_completo', 'email', 'papel', 'tipo_usuario'],
-          new_papel: editingUsuario.papel,
+          updated_fields: ['nome_completo', 'email', 'tipo_usuario'],
           new_tipo_usuario: editingUsuario.tipo_usuario
         }
       });
@@ -248,14 +245,16 @@ export default function UserManagement() {
     window.location.href = '/';
   };
 
-  const getRoleBadgeVariant = (papel: string | null, tipoUsuario: string | null) => {
-    return (papel === 'admin' || tipoUsuario === 'gestor') ? 'destructive' : 'secondary';
+  const getRoleBadgeVariant = (tipoUsuario: string | null) => {
+    if (tipoUsuario === 'gestor') return 'destructive';
+    if (tipoUsuario === 'socio') return 'secondary';
+    return 'outline';
   };
 
-  const getRoleDisplayName = (papel: string | null, tipoUsuario: string | null) => {
-    if (papel === 'admin' || tipoUsuario === 'gestor') {
-      return 'Administrador';
-    }
+  const getRoleDisplayName = (tipoUsuario: string | null) => {
+    if (tipoUsuario === 'gestor') return 'Gestor';
+    if (tipoUsuario === 'socio') return 'Sócio';
+    if (tipoUsuario === 'dependente') return 'Dependente';
     return 'Cliente';
   };
 
@@ -300,8 +299,8 @@ export default function UserManagement() {
             {userProfile && (
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-sm text-muted-foreground">Logado como:</span>
-                <Badge variant={getRoleBadgeVariant(userProfile.papel, userProfile.tipo_usuario)}>
-                  {getRoleDisplayName(userProfile.papel, userProfile.tipo_usuario)}
+                <Badge variant={getRoleBadgeVariant(userProfile.tipo_usuario)}>
+                  {getRoleDisplayName(userProfile.tipo_usuario)}
                 </Badge>
                 <span className="text-sm font-medium">{userProfile.nome_completo || userProfile.email}</span>
               </div>
@@ -349,8 +348,8 @@ export default function UserManagement() {
                       </TableCell>
                       <TableCell>{usuario.email || 'Não informado'}</TableCell>
                       <TableCell>
-                        <Badge variant={getRoleBadgeVariant(usuario.papel, usuario.tipo_usuario)}>
-                          {getRoleDisplayName(usuario.papel, usuario.tipo_usuario)}
+                        <Badge variant={getRoleBadgeVariant(usuario.tipo_usuario)}>
+                          {getRoleDisplayName(usuario.tipo_usuario)}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -428,25 +427,6 @@ export default function UserManagement() {
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="papel" className="text-right">
-                    Papel
-                  </Label>
-                  <select
-                    id="papel"
-                    value={editingUsuario.papel || ''}
-                    onChange={(e) =>
-                      setEditingUsuario({
-                        ...editingUsuario,
-                        papel: e.target.value,
-                      })
-                    }
-                    className="col-span-3 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  >
-                    <option value="cliente">Cliente</option>
-                    <option value="admin">Administrador</option>
-                  </select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="tipo_usuario" className="text-right">
                     Tipo Usuário
                   </Label>
@@ -462,6 +442,8 @@ export default function UserManagement() {
                     className="col-span-3 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   >
                     <option value="cliente">Cliente</option>
+                    <option value="dependente">Dependente</option>
+                    <option value="socio">Sócio</option>
                     <option value="gestor">Gestor</option>
                   </select>
                 </div>

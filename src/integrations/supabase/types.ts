@@ -729,7 +729,6 @@ export type Database = {
           email: string | null
           id: string
           nome_completo: string | null
-          papel: string | null
           peso_atual_kg: number | null
           plano_id: string | null
           tipo_usuario: Database["public"]["Enums"]["tipo_usuario"] | null
@@ -742,7 +741,6 @@ export type Database = {
           email?: string | null
           id: string
           nome_completo?: string | null
-          papel?: string | null
           peso_atual_kg?: number | null
           plano_id?: string | null
           tipo_usuario?: Database["public"]["Enums"]["tipo_usuario"] | null
@@ -755,7 +753,6 @@ export type Database = {
           email?: string | null
           id?: string
           nome_completo?: string | null
-          papel?: string | null
           peso_atual_kg?: number | null
           plano_id?: string | null
           tipo_usuario?: Database["public"]["Enums"]["tipo_usuario"] | null

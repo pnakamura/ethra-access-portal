@@ -59,18 +59,27 @@ serve(async (req) => {
       )
     }
 
-    // Check if current user is admin
-    const { data: currentUser, error: userError } = await supabaseClient
-      .from('usuarios')
-      .select('papel, tipo_usuario')
-      .eq('id', user.id)
-      .single()
+    // Check if current user is admin using the is_admin function
+    const { data: isAdminResult, error: adminCheckError } = await supabaseClient
+      .rpc('is_admin', { user_id: user.id });
 
-    if (userError || (currentUser?.papel !== 'admin' && currentUser?.tipo_usuario !== 'gestor')) {
+    if (adminCheckError) {
+      console.error('Error checking admin status:', adminCheckError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Failed to verify user permissions',
+          details: adminCheckError.message 
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!isAdminResult) {
+      console.log('Access denied - User is not admin:', user.id);
       return new Response(
         JSON.stringify({ error: 'Admin access required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      );
     }
 
     // Get target user info before deletion for audit log
