@@ -191,6 +191,9 @@ const Auth = () => {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
+      // Remove formatação do telefone (manter apenas números)
+      const phoneNumbers = phone.replace(/\D/g, '');
+      
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -198,7 +201,7 @@ const Auth = () => {
           emailRedirectTo: redirectUrl,
           data: {
             full_name: fullName,
-            phone: phone,
+            phone: phoneNumbers,
           },
         },
       });
