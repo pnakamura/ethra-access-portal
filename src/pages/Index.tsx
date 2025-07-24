@@ -155,12 +155,17 @@ const Index = () => {
             Bem-vindo ao sistema de administração Ethra
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            <div className="p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg">
-              <h3 className="text-lg font-semibold mb-2">Dashboard</h3>
-              <p className="text-muted-foreground">
-                Visão geral do sistema e métricas principais
+            <Button 
+              onClick={() => navigate('/dashboard')}
+              className="p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg hover:bg-glass/80 h-auto flex flex-col items-center space-y-2"
+              variant="ghost"
+            >
+              <Shield className="h-8 w-8 text-ethra" />
+              <h3 className="text-lg font-semibold">Dashboard Nutricional</h3>
+              <p className="text-muted-foreground text-sm">
+                Acompanhe seu progresso e evolução nutricional
               </p>
-            </div>
+            </Button>
             <Button 
               onClick={() => navigate('/users')}
               className="p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg hover:bg-glass/80 h-auto flex flex-col items-center space-y-2"

@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Pencil, Trash2, UserPlus, AlertTriangle, Shield, ArrowLeft } from 'lucide-react';
+import { UserFilters } from '@/components/UserManagement/UserFilters';
+import { UserStats } from '@/components/UserManagement/UserStats';
 
 interface Usuario {
   id: string;
@@ -35,6 +37,11 @@ export default function UserManagement() {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<Usuario | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  // Filtros
+  const [searchTerm, setSearchTerm] = useState('');
+  const [tipoUsuarioFilter, setTipoUsuarioFilter] = useState('all');
+  const [dataInicioFilter, setDataInicioFilter] = useState('');
+  const [dataFimFilter, setDataFimFilter] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -258,6 +265,33 @@ export default function UserManagement() {
     return 'Cliente';
   };
 
+  // Aplicar filtros aos usuários
+  const filteredUsuarios = usuarios.filter(usuario => {
+    // Filtro por busca (nome ou email)
+    const matchesSearch = !searchTerm || 
+      (usuario.nome_completo?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (usuario.email?.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    // Filtro por tipo de usuário
+    const matchesTipo = tipoUsuarioFilter === 'all' || usuario.tipo_usuario === tipoUsuarioFilter;
+
+    // Filtro por data
+    let matchesData = true;
+    if (dataInicioFilter || dataFimFilter) {
+      const usuarioDate = usuario.atualizado_em ? new Date(usuario.atualizado_em) : null;
+      if (usuarioDate) {
+        if (dataInicioFilter) {
+          matchesData = matchesData && usuarioDate >= new Date(dataInicioFilter);
+        }
+        if (dataFimFilter) {
+          matchesData = matchesData && usuarioDate <= new Date(dataFimFilter + 'T23:59:59');
+        }
+      }
+    }
+
+    return matchesSearch && matchesTipo && matchesData;
+  });
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -316,15 +350,36 @@ export default function UserManagement() {
           </div>
         </div>
 
+        {/* Estatísticas dos usuários */}
+        <UserStats />
+
+        {/* Filtros */}
+        <UserFilters
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          tipoUsuarioFilter={tipoUsuarioFilter}
+          setTipoUsuarioFilter={setTipoUsuarioFilter}
+          dataInicioFilter={dataInicioFilter}
+          setDataInicioFilter={setDataInicioFilter}
+          dataFimFilter={dataFimFilter}
+          setDataFimFilter={setDataFimFilter}
+          onClearFilters={() => {
+            setSearchTerm('');
+            setTipoUsuarioFilter('all');
+            setDataInicioFilter('');
+            setDataFimFilter('');
+          }}
+        />
+
         <Card className="bg-card-dark border-primary/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UserPlus className="h-5 w-5" />
-              Lista de Usuários ({usuarios.length})
+              Lista de Usuários ({filteredUsuarios.length} de {usuarios.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {usuarios.length === 0 ? (
+            {filteredUsuarios.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 Nenhum usuário encontrado
               </div>
@@ -341,7 +396,7 @@ export default function UserManagement() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {usuarios.map((usuario) => (
+                  {filteredUsuarios.map((usuario) => (
                     <TableRow key={usuario.id}>
                       <TableCell className="font-medium">
                         {usuario.nome_completo || 'Não informado'}

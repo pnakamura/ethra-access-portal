@@ -905,6 +905,32 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_user_dashboard_data: {
+        Args: { user_id: string }
+        Returns: {
+          peso_atual: number
+          ultimo_peso: number
+          meta_peso: number
+          meta_calorias: number
+          meta_agua: number
+          calorias_hoje: number
+          agua_hoje: number
+          registros_peso_30_dias: number
+          registros_nutricao_30_dias: number
+          registros_agua_30_dias: number
+        }[]
+      }
+      get_user_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          total_usuarios: number
+          total_clientes: number
+          total_socios: number
+          total_gestores: number
+          total_dependentes: number
+          usuarios_ativos_30_dias: number
+        }[]
+      }
       is_admin: {
         Args: { user_id?: string }
         Returns: boolean
