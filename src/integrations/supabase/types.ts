@@ -943,6 +943,10 @@ export type Database = {
         Args: { user_id: string }
         Returns: boolean
       }
+      is_socio: {
+        Args: { user_id?: string }
+        Returns: boolean
+      }
       log_admin_action: {
         Args: {
           action_type: string
