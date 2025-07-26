@@ -101,80 +101,52 @@ export default function CreateDependent() {
     setCreating(true);
 
     try {
-      // Create user in auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: {
-          full_name: nomeCompleto
-        }
+      // Get current session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Erro",
+          description: "Sessão expirada, faça login novamente",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Call edge function to create dependent
+      const { data, error } = await supabase.functions.invoke('create-dependent', {
+        body: {
+          nomeCompleto,
+          email,
+          celular,
+          password
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
-      if (authError) {
-        console.error('Erro ao criar usuário:', authError);
+      if (error) {
+        console.error('Erro ao chamar função:', error);
         toast({
           title: "Erro",
-          description: authError.message || "Falha ao criar usuário",
+          description: error.message || "Falha ao criar dependente",
           variant: "destructive",
         });
         return;
       }
 
-      if (!authData.user) {
-        toast({
-          title: "Erro",
-          description: "Falha ao criar usuário",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Update user profile as dependent
-      const { error: updateError } = await supabase
-        .from('usuarios')
-        .update({
-          nome_completo: nomeCompleto,
-          email: email,
-          celular: celular || null,
-          tipo_usuario: 'dependente',
-          atualizado_em: new Date().toISOString(),
-        })
-        .eq('id', authData.user.id);
-
-      if (updateError) {
-        console.error('Erro ao atualizar perfil:', updateError);
-        toast({
-          title: "Erro",
-          description: "Usuário criado mas falha ao definir como dependente",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Create link in vinculos_usuarios table
-      const { error: linkError } = await supabase
-        .from('vinculos_usuarios')
-        .insert({
-          usuario_id: authData.user.id,
-          usuario_principal_id: user?.id,
-          tipo_vinculo: 'dependente',
-          ativo: true
-        });
-
-      if (linkError) {
-        console.error('Erro ao criar vínculo:', linkError);
+      if (data.warning) {
         toast({
           title: "Aviso",
-          description: "Dependente criado mas falha ao registrar vínculo",
+          description: data.warning,
           variant: "destructive",
         });
+      } else {
+        toast({
+          title: "Sucesso",
+          description: "Dependente criado com sucesso",
+        });
       }
-
-      toast({
-        title: "Sucesso",
-        description: "Dependente criado com sucesso",
-      });
 
       // Reset form
       setNomeCompleto('');
