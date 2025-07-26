@@ -126,34 +126,93 @@ export default function Dashboard() {
   };
 
   const loadNutritionData = async (userId: string, period: "7d" | "30d") => {
-    const days = period === "7d" ? 7 : 30;
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-    const startDateStr = startDate.toISOString().split('T')[0];
-    
-    const { data, error } = await supabase
-      .from('informacoes_nutricionais')
-      .select('data_registro, calorias, proteinas, carboidratos, gorduras')
-      .eq('usuario_id', userId)
-      .gte('data_registro', startDateStr)
-      .is('deletado_em', null)
-      .order('data_registro', { ascending: true });
+    try {
+      console.log(`🔍 Loading nutrition data for user: ${userId}, period: ${period}`);
+      
+      const days = period === "7d" ? 7 : 30;
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+      const startDateStr = startDate.toISOString().split('T')[0];
+      
+      console.log(`📅 Date range: ${startDateStr} to ${new Date().toISOString().split('T')[0]}`);
+      
+      // First, check if there's ANY data for this user
+      const { data: allUserData, error: allDataError } = await supabase
+        .from('informacoes_nutricionais')
+        .select('data_registro, calorias, proteinas, carboidratos, gorduras')
+        .eq('usuario_id', userId)
+        .is('deletado_em', null)
+        .order('data_registro', { ascending: false })
+        .limit(5);
+      
+      console.log(`📊 All user data (last 5 records):`, allUserData);
+      console.log(`❌ Error fetching all data:`, allDataError);
+      
+      // Now fetch data for the specific period
+      const { data, error } = await supabase
+        .from('informacoes_nutricionais')
+        .select('data_registro, calorias, proteinas, carboidratos, gorduras')
+        .eq('usuario_id', userId)
+        .gte('data_registro', startDateStr)
+        .is('deletado_em', null)
+        .order('data_registro', { ascending: true });
 
-    if (!error && data) {
-      // Agrupar por dia
+      console.log(`📈 Period data (${period}):`, data);
+      console.log(`❌ Period data error:`, error);
+
+      if (error) {
+        console.error('❌ Error loading nutrition data:', error);
+        toast({
+          title: "Erro",
+          description: "Falha ao carregar dados nutricionais",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        console.log(`⚠️ No nutrition data found for period ${period}. Setting empty array.`);
+        setNutritionData([]);
+        return;
+      }
+
+      // Agrupar por dia com melhor formatação de data
       const grouped = data.reduce((acc, item) => {
-        const date = item.data_registro.split('T')[0];
-        if (!acc[date]) {
-          acc[date] = { data_registro: date, calorias: 0, proteinas: 0, carboidratos: 0, gorduras: 0 };
+        // Handle both date and datetime formats
+        const dateStr = item.data_registro.includes('T') 
+          ? item.data_registro.split('T')[0] 
+          : item.data_registro;
+        
+        if (!acc[dateStr]) {
+          acc[dateStr] = { 
+            data_registro: dateStr, 
+            calorias: 0, 
+            proteinas: 0, 
+            carboidratos: 0, 
+            gorduras: 0 
+          };
         }
-        acc[date].calorias += item.calorias || 0;
-        acc[date].proteinas += item.proteinas || 0;
-        acc[date].carboidratos += item.carboidratos || 0;
-        acc[date].gorduras += item.gorduras || 0;
+        
+        acc[dateStr].calorias += Number(item.calorias) || 0;
+        acc[dateStr].proteinas += Number(item.proteinas) || 0;
+        acc[dateStr].carboidratos += Number(item.carboidratos) || 0;
+        acc[dateStr].gorduras += Number(item.gorduras) || 0;
+        
         return acc;
       }, {} as Record<string, any>);
 
-      setNutritionData(Object.values(grouped));
+      const finalData = Object.values(grouped);
+      console.log(`✅ Final grouped nutrition data:`, finalData);
+      
+      setNutritionData(finalData);
+      
+    } catch (error) {
+      console.error('💥 Exception in loadNutritionData:', error);
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao carregar dados nutricionais",
+        variant: "destructive",
+      });
     }
   };
 
