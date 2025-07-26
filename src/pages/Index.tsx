@@ -155,39 +155,53 @@ const Index = () => {
             Bem-vindo ao sistema de administração Ethra
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            <Button 
-              onClick={() => navigate('/dashboard')}
-              className="p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg hover:bg-glass/80 h-auto flex flex-col items-center space-y-2"
-              variant="ghost"
-            >
-              <Shield className="h-8 w-8 text-ethra" />
-              <h3 className="text-lg font-semibold">Dashboard Nutricional</h3>
-              <p className="text-muted-foreground text-sm">
-                Acompanhe seu progresso e evolução nutricional
-              </p>
-            </Button>
-            <Button 
-              onClick={() => navigate('/users')}
-              className="p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg hover:bg-glass/80 h-auto flex flex-col items-center space-y-2"
-              variant="ghost"
-            >
-              <Users className="h-8 w-8 text-ethra" />
-              <h3 className="text-lg font-semibold">Gerenciar Usuários</h3>
-              <p className="text-muted-foreground text-sm">
-                Visualizar, editar e deletar usuários do sistema
-              </p>
-            </Button>
-            <Button 
-              onClick={() => navigate('/create-dependent')}
-              className="p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg hover:bg-glass/80 h-auto flex flex-col items-center space-y-2"
-              variant="ghost"
-            >
-              <Users className="h-8 w-8 text-ethra" />
-              <h3 className="text-lg font-semibold">Criar Dependente</h3>
-              <p className="text-muted-foreground text-sm">
-                Criar novos usuários dependentes vinculados à sua conta
-              </p>
-            </Button>
+            <div className="group">
+              <Button 
+                onClick={() => navigate('/dashboard')}
+                className="w-full p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg hover:bg-glass/80 h-auto min-h-[140px] flex flex-col items-center justify-center space-y-3 text-center"
+                variant="ghost"
+              >
+                <Shield className="h-8 w-8 text-ethra flex-shrink-0" />
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-foreground">Dashboard Nutricional</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed max-w-[200px]">
+                    Acompanhe seu progresso e evolução nutricional
+                  </p>
+                </div>
+              </Button>
+            </div>
+            
+            <div className="group">
+              <Button 
+                onClick={() => navigate('/users')}
+                className="w-full p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg hover:bg-glass/80 h-auto min-h-[140px] flex flex-col items-center justify-center space-y-3 text-center"
+                variant="ghost"
+              >
+                <Users className="h-8 w-8 text-ethra flex-shrink-0" />
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-foreground">Gerenciar Usuários</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed max-w-[200px]">
+                    Visualizar, editar e deletar usuários do sistema
+                  </p>
+                </div>
+              </Button>
+            </div>
+            
+            <div className="group">
+              <Button 
+                onClick={() => navigate('/create-dependent')}
+                className="w-full p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg hover:bg-glass/80 h-auto min-h-[140px] flex flex-col items-center justify-center space-y-3 text-center"
+                variant="ghost"
+              >
+                <Users className="h-8 w-8 text-ethra flex-shrink-0" />
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-foreground">Criar Dependente</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed max-w-[200px]">
+                    Criar novos usuários dependentes vinculados à sua conta
+                  </p>
+                </div>
+              </Button>
+            </div>
           </div>
         </div>
       </main>
