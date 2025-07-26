@@ -3,12 +3,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, LogOut, Shield } from 'lucide-react';
+import { ArrowLeft, LogOut, Shield, RefreshCw } from 'lucide-react';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
 import { NutritionChart } from '@/components/Dashboard/NutritionChart';
 import { WeightChart } from '@/components/Dashboard/WeightChart';
 import { HydrationChart } from '@/components/Dashboard/HydrationChart';
 import { ActivitySummary } from '@/components/Dashboard/ActivitySummary';
+import { UserSelector } from '@/components/Dashboard/UserSelector';
+import { RecentMeals } from '@/components/Dashboard/RecentMeals';
+import { GoalsConfig } from '@/components/Dashboard/GoalsConfig';
+import { NutritionInsights } from '@/components/Dashboard/NutritionInsights';
 
 interface DashboardData {
   peso_atual: number;
@@ -33,11 +37,14 @@ interface Usuario {
 export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<Usuario | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [selectedUserProfile, setSelectedUserProfile] = useState<Usuario | null>(null);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [nutritionData, setNutritionData] = useState<any[]>([]);
   const [weightData, setWeightData] = useState<any[]>([]);
   const [hydrationData, setHydrationData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [nutritionPeriod, setNutritionPeriod] = useState<"7d" | "30d">("7d");
   const [weightPeriod, setWeightPeriod] = useState<"7d" | "30d" | "90d">("30d");
   const { toast } = useToast();
@@ -74,6 +81,8 @@ export default function Dashboard() {
       }
 
       setUserProfile(profile);
+      setSelectedUserId(user.id);
+      setSelectedUserProfile(profile);
       await loadDashboardData(user.id);
     } catch (error) {
       console.error('Erro na verificação de autenticação:', error);
@@ -197,15 +206,49 @@ export default function Dashboard() {
 
   const handleNutritionPeriodChange = (period: "7d" | "30d") => {
     setNutritionPeriod(period);
-    if (user) {
-      loadNutritionData(user.id, period);
+    if (selectedUserId) {
+      loadNutritionData(selectedUserId, period);
     }
   };
 
   const handleWeightPeriodChange = (period: "7d" | "30d" | "90d") => {
     setWeightPeriod(period);
-    if (user) {
-      loadWeightData(user.id, period);
+    if (selectedUserId) {
+      loadWeightData(selectedUserId, period);
+    }
+  };
+
+  const handleUserChange = async (newUserId: string) => {
+    setSelectedUserId(newUserId);
+    
+    // Load selected user profile
+    const { data: profile } = await supabase
+      .from('usuarios')
+      .select('*')
+      .eq('id', newUserId)
+      .single();
+    
+    if (profile) {
+      setSelectedUserProfile(profile);
+      await loadDashboardData(newUserId);
+    }
+  };
+
+  const handleRefresh = async () => {
+    if (selectedUserId) {
+      setRefreshing(true);
+      await loadDashboardData(selectedUserId);
+      setRefreshing(false);
+      toast({
+        title: "Dados atualizados",
+        description: "Dashboard atualizado com sucesso!",
+      });
+    }
+  };
+
+  const handleGoalsUpdate = () => {
+    if (selectedUserId) {
+      loadDashboardData(selectedUserId);
     }
   };
 
@@ -232,19 +275,25 @@ export default function Dashboard() {
             <p className="text-muted-foreground mt-2">
               Acompanhe seu progresso e evolução
             </p>
-            {userProfile && (
+            {selectedUserProfile && (
               <div className="flex items-center gap-2 mt-2">
-                <span className="text-sm text-muted-foreground">Bem-vindo,</span>
-                <span className="text-sm font-medium">{userProfile.nome_completo || userProfile.email}</span>
+                <span className="text-sm text-muted-foreground">
+                  {selectedUserId === user?.id ? 'Bem-vindo,' : 'Visualizando dados de:'}
+                </span>
+                <span className="text-sm font-medium">{selectedUserProfile.nome_completo || selectedUserProfile.email}</span>
               </div>
             )}
           </div>
           <div className="flex gap-4">
+            <Button onClick={handleRefresh} variant="outline" disabled={refreshing}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              Atualizar
+            </Button>
             <Button onClick={() => window.location.href = '/'} variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar
             </Button>
-            {userProfile?.tipo_usuario === 'gestor' && (
+            {(userProfile?.tipo_usuario === 'gestor' || userProfile?.tipo_usuario === 'socio') && (
               <Button onClick={() => window.location.href = '/users'} variant="outline">
                 <Shield className="h-4 w-4 mr-2" />
                 Gerenciar Usuários
@@ -256,6 +305,30 @@ export default function Dashboard() {
             </Button>
           </div>
         </div>
+
+        {/* User Selector for Managers and Partners */}
+        {userProfile && (
+          <UserSelector
+            currentUser={userProfile}
+            selectedUserId={selectedUserId}
+            onUserChange={handleUserChange}
+          />
+        )}
+
+        {/* Goals Configuration */}
+        {dashboardData && selectedUserId === user?.id && (
+          <div className="mb-6">
+            <GoalsConfig
+              userId={selectedUserId}
+              currentGoals={{
+                meta_peso: dashboardData.meta_peso,
+                meta_calorias: dashboardData.meta_calorias,
+                meta_agua: dashboardData.meta_agua,
+              }}
+              onGoalsUpdate={handleGoalsUpdate}
+            />
+          </div>
+        )}
 
         {/* Stats Cards */}
         {dashboardData && (
@@ -301,6 +374,17 @@ export default function Dashboard() {
               />
             )}
           </div>
+        </div>
+
+        {/* Third Row - Recent Meals and Insights */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <RecentMeals userId={selectedUserId} />
+          {dashboardData && (
+            <NutritionInsights 
+              userId={selectedUserId} 
+              dashboardData={dashboardData}
+            />
+          )}
         </div>
       </div>
     </div>
