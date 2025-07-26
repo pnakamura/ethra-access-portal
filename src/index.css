@@ -8,43 +8,65 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 220 13% 5%;
-    --foreground: 220 9% 95%;
+    /* Light mode as default - Ethra Light & Fresh palette */
+    --background: 210 20% 98%;
+    --foreground: 220 9% 15%;
 
-    --card: 220 13% 8%;
-    --card-foreground: 220 9% 95%;
+    --card: 220 14% 96%;
+    --card-foreground: 220 9% 15%;
 
-    --popover: 220 13% 8%;
-    --popover-foreground: 220 9% 95%;
+    --popover: 210 20% 98%;
+    --popover-foreground: 220 9% 15%;
 
-    --primary: 266 85% 58%;
-    --primary-foreground: 220 9% 95%;
+    --primary: 142 76% 36%;
+    --primary-foreground: 210 20% 98%;
 
-    --secondary: 220 13% 15%;
-    --secondary-foreground: 220 9% 85%;
+    --secondary: 220 14% 93%;
+    --secondary-foreground: 220 9% 25%;
 
-    --muted: 220 13% 15%;
-    --muted-foreground: 220 9% 60%;
+    --muted: 220 14% 93%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 266 85% 58%;
-    --accent-foreground: 220 9% 95%;
+    --accent: 199 89% 48%;
+    --accent-foreground: 210 20% 98%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 220 9% 95%;
+    --destructive: 11 83% 61%;
+    --destructive-foreground: 210 20% 98%;
 
-    --border: 220 13% 20%;
-    --input: 220 13% 15%;
-    --ring: 266 85% 58%;
+    --border: 220 14% 90%;
+    --input: 210 20% 98%;
+    --ring: 142 76% 36%;
 
-    /* Ethra brand colors */
-    --ethra-primary: 266 85% 58%;
-    --ethra-secondary: 200 85% 55%;
-    --ethra-gradient: linear-gradient(135deg, hsl(266 85% 58%), hsl(200 85% 55%));
-    --ethra-glow: 0 0 40px hsl(266 85% 58% / 0.3);
+    /* Ethra brand colors - Health & Vitality theme */
+    --ethra-primary: 142 76% 36%;
+    --ethra-secondary: 199 89% 48%;
+    --ethra-accent: 271 76% 53%;
+    --ethra-coral: 11 83% 61%;
+    --ethra-gold: 45 93% 47%;
+    --ethra-mint: 152 68% 49%;
     
-    /* Glass morphism */
-    --glass: 220 13% 15% / 0.8;
-    --glass-border: 220 9% 95% / 0.1;
+    /* Contextual colors for health data */
+    --nutrition-positive: 142 76% 36%;
+    --nutrition-warning: 45 93% 47%;
+    --nutrition-danger: 11 83% 61%;
+    
+    --weight-loss: 142 76% 36%;
+    --weight-gain: 11 83% 61%;
+    --weight-stable: 199 89% 48%;
+    
+    --hydration-excellent: 199 89% 48%;
+    --hydration-good: 152 68% 49%;
+    --hydration-low: 45 93% 47%;
+
+    /* Beautiful gradients */
+    --ethra-gradient: linear-gradient(135deg, hsl(142 76% 36%), hsl(152 68% 49%));
+    --ethra-gradient-secondary: linear-gradient(135deg, hsl(199 89% 48%), hsl(271 76% 53%));
+    --ethra-gradient-accent: linear-gradient(135deg, hsl(45 93% 47%), hsl(11 83% 61%));
+    --ethra-glow: 0 0 40px hsl(142 76% 36% / 0.2);
+    
+    /* Glass morphism - lighter for new theme */
+    --glass: 210 20% 98% / 0.8;
+    --glass-border: 220 9% 15% / 0.1;
 
     --radius: 0.5rem;
 

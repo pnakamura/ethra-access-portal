@@ -65,10 +65,31 @@ export default {
 				ethra: {
 					DEFAULT: 'hsl(var(--ethra-primary))',
 					secondary: 'hsl(var(--ethra-secondary))',
+					accent: 'hsl(var(--ethra-accent))',
+					coral: 'hsl(var(--ethra-coral))',
+					gold: 'hsl(var(--ethra-gold))',
+					mint: 'hsl(var(--ethra-mint))',
+				},
+				nutrition: {
+					positive: 'hsl(var(--nutrition-positive))',
+					warning: 'hsl(var(--nutrition-warning))',
+					danger: 'hsl(var(--nutrition-danger))',
+				},
+				weight: {
+					loss: 'hsl(var(--weight-loss))',
+					gain: 'hsl(var(--weight-gain))',
+					stable: 'hsl(var(--weight-stable))',
+				},
+				hydration: {
+					excellent: 'hsl(var(--hydration-excellent))',
+					good: 'hsl(var(--hydration-good))',
+					low: 'hsl(var(--hydration-low))',
 				}
 			},
 			backgroundImage: {
 				'ethra-gradient': 'var(--ethra-gradient)',
+				'ethra-gradient-secondary': 'var(--ethra-gradient-secondary)',
+				'ethra-gradient-accent': 'var(--ethra-gradient-accent)',
 			},
 			boxShadow: {
 				'ethra-glow': 'var(--ethra-glow)',
