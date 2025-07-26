@@ -177,12 +177,17 @@ const Index = () => {
                 Visualizar, editar e deletar usuários do sistema
               </p>
             </Button>
-            <div className="p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg">
-              <h3 className="text-lg font-semibold mb-2">Relatórios</h3>
-              <p className="text-muted-foreground">
-                Visualizar relatórios e análises
+            <Button 
+              onClick={() => navigate('/create-dependent')}
+              className="p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg hover:bg-glass/80 h-auto flex flex-col items-center space-y-2"
+              variant="ghost"
+            >
+              <Users className="h-8 w-8 text-ethra" />
+              <h3 className="text-lg font-semibold">Criar Dependente</h3>
+              <p className="text-muted-foreground text-sm">
+                Criar novos usuários dependentes vinculados à sua conta
               </p>
-            </div>
+            </Button>
           </div>
         </div>
       </main>

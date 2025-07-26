@@ -78,8 +78,8 @@ export default function UserManagement() {
 
       setUserProfile(profile);
       
-      // Check if user is actually admin
-      const userIsAdmin = profile.tipo_usuario === 'gestor';
+      // Check if user is admin or socio
+      const userIsAdmin = profile.tipo_usuario === 'gestor' || profile.tipo_usuario === 'socio';
       setIsAdmin(userIsAdmin);
       
       if (!userIsAdmin) {
