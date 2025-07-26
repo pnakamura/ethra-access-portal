@@ -154,17 +154,19 @@ const Index = () => {
           <p className="text-lg md:text-xl text-muted-foreground">
             Bem-vindo ao sistema de administração Ethra
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             <div className="group">
               <Button 
                 onClick={() => navigate('/dashboard')}
-                className="w-full p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg hover:bg-glass/80 h-auto min-h-[140px] flex flex-col items-center justify-center space-y-3 text-center"
+                className="w-full p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg hover:bg-glass/80 h-auto min-h-[160px] flex flex-col items-center justify-center space-y-4 text-center"
                 variant="ghost"
               >
                 <Shield className="h-8 w-8 text-ethra flex-shrink-0" />
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-foreground">Dashboard Nutricional</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed max-w-[200px]">
+                <div className="space-y-2 flex-1 flex flex-col justify-center">
+                  <h3 className="text-base font-semibold text-foreground leading-tight">
+                    Dashboard Nutricional
+                  </h3>
+                  <p className="text-muted-foreground text-xs leading-relaxed px-2">
                     Acompanhe seu progresso e evolução nutricional
                   </p>
                 </div>
@@ -174,13 +176,15 @@ const Index = () => {
             <div className="group">
               <Button 
                 onClick={() => navigate('/users')}
-                className="w-full p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg hover:bg-glass/80 h-auto min-h-[140px] flex flex-col items-center justify-center space-y-3 text-center"
+                className="w-full p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg hover:bg-glass/80 h-auto min-h-[160px] flex flex-col items-center justify-center space-y-4 text-center"
                 variant="ghost"
               >
                 <Users className="h-8 w-8 text-ethra flex-shrink-0" />
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-foreground">Gerenciar Usuários</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed max-w-[200px]">
+                <div className="space-y-2 flex-1 flex flex-col justify-center">
+                  <h3 className="text-base font-semibold text-foreground leading-tight">
+                    Gerenciar Usuários
+                  </h3>
+                  <p className="text-muted-foreground text-xs leading-relaxed px-2">
                     Visualizar, editar e deletar usuários do sistema
                   </p>
                 </div>
@@ -190,13 +194,15 @@ const Index = () => {
             <div className="group">
               <Button 
                 onClick={() => navigate('/create-dependent')}
-                className="w-full p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg hover:bg-glass/80 h-auto min-h-[140px] flex flex-col items-center justify-center space-y-3 text-center"
+                className="w-full p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg hover:bg-glass/80 h-auto min-h-[160px] flex flex-col items-center justify-center space-y-4 text-center"
                 variant="ghost"
               >
                 <Users className="h-8 w-8 text-ethra flex-shrink-0" />
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-foreground">Criar Dependente</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed max-w-[200px]">
+                <div className="space-y-2 flex-1 flex flex-col justify-center">
+                  <h3 className="text-base font-semibold text-foreground leading-tight">
+                    Criar Dependente
+                  </h3>
+                  <p className="text-muted-foreground text-xs leading-relaxed px-2">
                     Criar novos usuários dependentes vinculados à sua conta
                   </p>
                 </div>
