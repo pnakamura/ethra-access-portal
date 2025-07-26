@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Eye, EyeOff, Mail, Lock, User as UserIcon, Shield, ArrowLeft, Phone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { ValidatedInput, PasswordStrengthIndicator } from '@/components/ui/form-validation';
+import { successToast, errorToast } from '@/components/ui/enhanced-toast';
 import type { User, Session } from '@supabase/supabase-js';
 import ethraBg from '@/assets/ethra-bg.jpg';
 
@@ -360,7 +362,7 @@ const Auth = () => {
             <CardHeader className="text-center space-y-4">
               <div className="flex items-center justify-center space-x-2">
                 <Shield className="h-8 w-8 text-ethra" />
-                <CardTitle className="text-3xl font-bold bg-ethra-gradient bg-clip-text text-transparent">
+                <CardTitle className="text-2xl md:text-3xl font-bold bg-ethra-gradient bg-clip-text text-transparent">
                   Ethra
                 </CardTitle>
               </div>
@@ -462,7 +464,7 @@ const Auth = () => {
             <CardHeader className="text-center space-y-4">
               <div className="flex items-center justify-center space-x-2">
                 <Shield className="h-8 w-8 text-ethra" />
-                <CardTitle className="text-3xl font-bold bg-ethra-gradient bg-clip-text text-transparent">
+                <CardTitle className="text-2xl md:text-3xl font-bold bg-ethra-gradient bg-clip-text text-transparent">
                   Ethra
                 </CardTitle>
               </div>
@@ -533,12 +535,12 @@ const Auth = () => {
       <div className="relative z-10 w-full max-w-md p-6">
         <Card className="backdrop-blur-lg bg-glass border-glass shadow-ethra-glow">
           <CardHeader className="text-center space-y-4">
-            <div className="flex items-center justify-center space-x-2">
-              <Shield className="h-8 w-8 text-ethra" />
-              <CardTitle className="text-3xl font-bold bg-ethra-gradient bg-clip-text text-transparent">
-                Ethra
-              </CardTitle>
-            </div>
+              <div className="flex items-center justify-center space-x-2">
+                <Shield className="h-8 w-8 text-ethra" />
+                <CardTitle className="text-2xl md:text-3xl font-bold bg-ethra-gradient bg-clip-text text-transparent">
+                  Ethra
+                </CardTitle>
+              </div>
             <CardDescription className="text-muted-foreground">
               Sistema de acesso seguro
             </CardDescription>

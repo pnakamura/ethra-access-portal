@@ -10,9 +10,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, Trash2, UserPlus, AlertTriangle, Shield, ArrowLeft } from 'lucide-react';
+import { Pencil, Trash2, UserPlus, AlertTriangle, Shield, ArrowLeft, LogOut } from 'lucide-react';
+import { Breadcrumbs } from '@/components/ui/breadcrumbs';
+import { TableSkeleton, StatsSkeleton } from '@/components/ui/loading-skeleton';
+import { PageHeader } from '@/components/ui/page-header';
 import { UserFilters } from '@/components/UserManagement/UserFilters';
 import { UserStats } from '@/components/UserManagement/UserStats';
+import { UserTable } from '@/components/UserManagement/UserTable';
 
 interface Usuario {
   id: string;
@@ -325,10 +329,15 @@ export default function UserManagement() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ethra mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Carregando...</p>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto p-4 md:p-6">
+          <Breadcrumbs />
+          <div className="mb-8">
+            <div className="h-10 w-80 bg-muted animate-pulse rounded mb-2" />
+            <div className="h-4 w-60 bg-muted animate-pulse rounded" />
+          </div>
+          <StatsSkeleton className="mb-8" />
+          <TableSkeleton />
         </div>
       </div>
     );
@@ -354,34 +363,31 @@ export default function UserManagement() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-6">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Gerenciamento de Usuários
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Gerencie todos os usuários cadastrados no sistema
-            </p>
-            {userProfile && (
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-sm text-muted-foreground">Logado como:</span>
-                <Badge variant={getRoleBadgeVariant(userProfile.tipo_usuario)}>
-                  {getRoleDisplayName(userProfile.tipo_usuario)}
-                </Badge>
-                <span className="text-sm font-medium">{userProfile.nome_completo || userProfile.email}</span>
-              </div>
-            )}
-          </div>
-          <div className="flex gap-4">
-            <Button onClick={() => window.location.href = '/'} variant="outline">
-              Voltar ao Dashboard
-            </Button>
-            <Button onClick={handleLogout} variant="destructive">
+      <div className="container mx-auto p-4 md:p-6">
+        {/* Breadcrumbs */}
+        <Breadcrumbs />
+        
+        <PageHeader
+          title="Gerenciamento de Usuários"
+          description="Gerencie todos os usuários cadastrados no sistema"
+          showBackButton
+        >
+          {userProfile && (
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-sm text-muted-foreground">Logado como:</span>
+              <Badge variant={getRoleBadgeVariant(userProfile.tipo_usuario)}>
+                {getRoleDisplayName(userProfile.tipo_usuario)}
+              </Badge>
+              <span className="text-sm font-medium">{userProfile.nome_completo || userProfile.email}</span>
+            </div>
+          )}
+          <div className="flex flex-col sm:flex-row gap-2 mt-4">
+            <Button onClick={handleLogout} variant="destructive" size="sm">
+              <LogOut className="h-4 w-4 mr-2" />
               Sair
             </Button>
           </div>
-        </div>
+        </PageHeader>
 
         {/* Estatísticas dos usuários */}
         <UserStats />
@@ -404,74 +410,14 @@ export default function UserManagement() {
           }}
         />
 
-        <Card className="bg-card-dark border-primary/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserPlus className="h-5 w-5" />
-              Lista de Usuários ({filteredUsuarios.length} de {usuarios.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {filteredUsuarios.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Nenhum usuário encontrado
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome Completo</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Função</TableHead>
-                    <TableHead>Data de Criação</TableHead>
-                    <TableHead>Última Atualização</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUsuarios.map((usuario) => (
-                    <TableRow key={usuario.id}>
-                      <TableCell className="font-medium">
-                        {usuario.nome_completo || 'Não informado'}
-                      </TableCell>
-                      <TableCell>{usuario.email || 'Não informado'}</TableCell>
-                      <TableCell>
-                        <Badge variant={getRoleBadgeVariant(usuario.tipo_usuario)}>
-                          {getRoleDisplayName(usuario.tipo_usuario)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {usuario.atualizado_em ? new Date(usuario.atualizado_em).toLocaleDateString('pt-BR') : 'N/A'}
-                      </TableCell>
-                      <TableCell>
-                        {usuario.atualizado_em ? new Date(usuario.atualizado_em).toLocaleDateString('pt-BR') : 'N/A'}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(usuario)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeleteClick(usuario)}
-                            disabled={usuario.id === user?.id}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+        <UserTable
+          usuarios={filteredUsuarios}
+          user={user}
+          onEdit={handleEdit}
+          onDelete={handleDeleteClick}
+          getRoleBadgeVariant={getRoleBadgeVariant}
+          getRoleDisplayName={getRoleDisplayName}
+        />
 
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

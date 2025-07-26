@@ -4,6 +4,9 @@ import { User } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, LogOut, Shield, RefreshCw } from 'lucide-react';
+import { Breadcrumbs } from '@/components/ui/breadcrumbs';
+import { DashboardSkeleton } from '@/components/ui/loading-skeleton';
+import { PageHeader } from '@/components/ui/page-header';
 import { StatsCards } from '@/components/Dashboard/StatsCards';
 import { NutritionChart } from '@/components/Dashboard/NutritionChart';
 import { WeightChart } from '@/components/Dashboard/WeightChart';
@@ -317,10 +320,9 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ethra mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Carregando dashboard...</p>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto p-6">
+          <DashboardSkeleton />
         </div>
       </div>
     );
@@ -328,46 +330,40 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-6">
+      <div className="container mx-auto p-4 md:p-6">
+        {/* Breadcrumbs */}
+        <Breadcrumbs />
+        
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Dashboard Nutricional
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Acompanhe seu progresso e evolução
-            </p>
-            {selectedUserProfile && (
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-sm text-muted-foreground">
-                  {selectedUserId === user?.id ? 'Bem-vindo,' : 'Visualizando dados de:'}
-                </span>
-                <span className="text-sm font-medium">{selectedUserProfile.nome_completo || selectedUserProfile.email}</span>
-              </div>
-            )}
-          </div>
-          <div className="flex gap-4">
-            <Button onClick={handleRefresh} variant="outline" disabled={refreshing}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-              Atualizar
-            </Button>
-            <Button onClick={() => window.location.href = '/'} variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar
-            </Button>
+        <PageHeader
+          title="Dashboard Nutricional"
+          description="Acompanhe seu progresso e evolução"
+          showBackButton
+          showRefresh
+          onRefresh={handleRefresh}
+          isRefreshing={refreshing}
+        >
+          {selectedUserProfile && (
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-sm text-muted-foreground">
+                {selectedUserId === user?.id ? 'Bem-vindo,' : 'Visualizando dados de:'}
+              </span>
+              <span className="text-sm font-medium">{selectedUserProfile.nome_completo || selectedUserProfile.email}</span>
+            </div>
+          )}
+          <div className="flex flex-col sm:flex-row gap-2 mt-4">
             {(userProfile?.tipo_usuario === 'gestor' || userProfile?.tipo_usuario === 'socio') && (
-              <Button onClick={() => window.location.href = '/users'} variant="outline">
+              <Button onClick={() => window.location.href = '/users'} variant="outline" size="sm">
                 <Shield className="h-4 w-4 mr-2" />
                 Gerenciar Usuários
               </Button>
             )}
-            <Button onClick={handleLogout} variant="destructive">
+            <Button onClick={handleLogout} variant="destructive" size="sm">
               <LogOut className="h-4 w-4 mr-2" />
               Sair
             </Button>
           </div>
-        </div>
+        </PageHeader>
 
         {/* User Selector for Managers and Partners */}
         {userProfile && (
