@@ -127,11 +127,15 @@ export default function Dashboard() {
 
   const loadNutritionData = async (userId: string, period: "7d" | "30d") => {
     const days = period === "7d" ? 7 : 30;
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    const startDateStr = startDate.toISOString().split('T')[0];
+    
     const { data, error } = await supabase
       .from('informacoes_nutricionais')
       .select('data_registro, calorias, proteinas, carboidratos, gorduras')
       .eq('usuario_id', userId)
-      .gte('data_registro', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
+      .gte('data_registro', startDateStr)
       .is('deletado_em', null)
       .order('data_registro', { ascending: true });
 
