@@ -79,10 +79,14 @@ export default function UserManagement() {
       setUserProfile(profile);
       
       // Check if user is admin or socio
-      const userIsAdmin = profile.tipo_usuario === 'gestor' || profile.tipo_usuario === 'socio';
+      const userIsAdmin = profile.tipo_usuario === 'gestor';
+      const userIsSocio = profile.tipo_usuario === 'socio';
       setIsAdmin(userIsAdmin);
       
-      if (!userIsAdmin) {
+      // For access control, both admin and socio can access
+      const canAccess = userIsAdmin || userIsSocio;
+      
+      if (!canAccess) {
         toast({
           title: "Acesso Negado",
           description: "Você não tem permissão para acessar esta página",
@@ -127,7 +131,11 @@ export default function UserManagement() {
   };
 
   const handleSaveEdit = async () => {
-    if (!editingUsuario || !isAdmin) return;
+    if (!editingUsuario) return;
+    
+    // Both admin and socio can edit users
+    const canEdit = userProfile?.tipo_usuario === 'gestor' || userProfile?.tipo_usuario === 'socio';
+    if (!canEdit) return;
 
     try {
       // Update usuario with tipo_usuario only
@@ -303,7 +311,9 @@ export default function UserManagement() {
     );
   }
 
-  if (!isAdmin) {
+  // Both admin and socio can access this page
+  const canAccessPage = userProfile?.tipo_usuario === 'gestor' || userProfile?.tipo_usuario === 'socio';
+  if (!canAccessPage) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
