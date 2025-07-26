@@ -35,7 +35,6 @@ export function UserSelector({ currentUser, selectedUserId, onUserChange }: User
         const { data, error } = await supabase
           .from('usuarios')
           .select('id, nome_completo, email, tipo_usuario')
-          .is('deletado_em', null)
           .order('nome_completo');
         
         if (!error && data) {
@@ -47,7 +46,6 @@ export function UserSelector({ currentUser, selectedUserId, onUserChange }: User
           .from('usuarios')
           .select('id, nome_completo, email, tipo_usuario')
           .in('tipo_usuario', ['cliente', 'dependente'])
-          .is('deletado_em', null)
           .order('nome_completo');
         
         if (!error && data) {

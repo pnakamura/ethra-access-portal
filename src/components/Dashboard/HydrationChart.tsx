@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
+import { Droplets } from "lucide-react";
 
 interface HydrationData {
   date: string;
@@ -47,38 +48,48 @@ export function HydrationChart({ data, metaAgua = 2000 }: HydrationChartProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis 
-                dataKey="date" 
-                className="text-muted-foreground"
-                fontSize={12}
-              />
-              <YAxis className="text-muted-foreground" fontSize={12} />
-              <Tooltip 
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px'
-                }}
-                formatter={(value: number) => [`${value}ml`, 'Consumo']}
-              />
-              <ReferenceLine 
-                y={metaAgua} 
-                stroke="hsl(var(--destructive))" 
-                strokeDasharray="5 5"
-                label={{ value: `Meta: ${metaAgua}ml`, position: "top" }}
-              />
-              <Bar 
-                dataKey="quantidade" 
-                fill="hsl(var(--chart-1))"
-                radius={[4, 4, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        {chartData.length === 0 ? (
+          <div className="h-64 flex items-center justify-center">
+            <div className="text-center text-muted-foreground">
+              <Droplets className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <p>Nenhum registro de hidratação encontrado</p>
+              <p className="text-sm">Registre seu consumo de água</p>
+            </div>
+          </div>
+        ) : (
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis 
+                  dataKey="date" 
+                  className="text-muted-foreground"
+                  fontSize={12}
+                />
+                <YAxis className="text-muted-foreground" fontSize={12} />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                  formatter={(value: number) => [`${value}ml`, 'Consumo']}
+                />
+                <ReferenceLine 
+                  y={metaAgua} 
+                  stroke="hsl(var(--destructive))" 
+                  strokeDasharray="5 5"
+                  label={{ value: `Meta: ${metaAgua}ml`, position: "top" }}
+                />
+                <Bar 
+                  dataKey="quantidade" 
+                  fill="hsl(var(--chart-1))"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Activity } from "lucide-react";
 
 interface NutritionData {
   data_registro: string;
@@ -73,55 +74,65 @@ export function NutritionChart({ data, period, onPeriodChange }: NutritionChartP
         </div>
       </CardHeader>
       <CardContent>
-        <div className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            {activeChart === "calories" ? (
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis 
-                  dataKey="date" 
-                  className="text-muted-foreground"
-                  fontSize={12}
-                />
-                <YAxis className="text-muted-foreground" fontSize={12} />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="calorias" 
-                  stroke="hsl(var(--primary))" 
-                  strokeWidth={2}
-                  dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
-                />
-              </LineChart>
-            ) : (
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis 
-                  dataKey="date" 
-                  className="text-muted-foreground"
-                  fontSize={12}
-                />
-                <YAxis className="text-muted-foreground" fontSize={12} />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
-                />
-                <Bar dataKey="proteinas" fill="#ef4444" name="Proteínas" />
-                <Bar dataKey="carboidratos" fill="#3b82f6" name="Carboidratos" />
-                <Bar dataKey="gorduras" fill="#f59e0b" name="Gorduras" />
-              </BarChart>
-            )}
-          </ResponsiveContainer>
-        </div>
+        {chartData.length === 0 ? (
+          <div className="h-80 flex items-center justify-center">
+            <div className="text-center text-muted-foreground">
+              <Activity className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <p>Nenhum dado nutricional encontrado</p>
+              <p className="text-sm">Registre suas refeições para ver os gráficos</p>
+            </div>
+          </div>
+        ) : (
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              {activeChart === "calories" ? (
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis 
+                    dataKey="date" 
+                    className="text-muted-foreground"
+                    fontSize={12}
+                  />
+                  <YAxis className="text-muted-foreground" fontSize={12} />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="calorias" 
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth={2}
+                    dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
+                  />
+                </LineChart>
+              ) : (
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis 
+                    dataKey="date" 
+                    className="text-muted-foreground"
+                    fontSize={12}
+                  />
+                  <YAxis className="text-muted-foreground" fontSize={12} />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Bar dataKey="proteinas" fill="#ef4444" name="Proteínas" />
+                  <Bar dataKey="carboidratos" fill="#3b82f6" name="Carboidratos" />
+                  <Bar dataKey="gorduras" fill="#f59e0b" name="Gorduras" />
+                </BarChart>
+              )}
+            </ResponsiveContainer>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

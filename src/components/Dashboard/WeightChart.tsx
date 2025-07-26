@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { Button } from "@/components/ui/button";
+import { TrendingUp } from "lucide-react";
 
 interface WeightData {
   data_registro: string;
@@ -68,47 +69,57 @@ export function WeightChart({ data, metaPeso, period, onPeriodChange }: WeightCh
         )}
       </CardHeader>
       <CardContent>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis 
-                dataKey="date" 
-                className="text-muted-foreground"
-                fontSize={12}
-              />
-              <YAxis 
-                className="text-muted-foreground" 
-                fontSize={12}
-                domain={['dataMin - 2', 'dataMax + 2']}
-              />
-              <Tooltip 
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px'
-                }}
-                formatter={(value: number) => [`${value}kg`, 'Peso']}
-              />
-              {metaPeso && (
-                <ReferenceLine 
-                  y={metaPeso} 
-                  stroke="hsl(var(--destructive))" 
-                  strokeDasharray="5 5"
-                  label={{ value: `Meta: ${metaPeso}kg`, position: "top" }}
+        {chartData.length === 0 ? (
+          <div className="h-64 flex items-center justify-center">
+            <div className="text-center text-muted-foreground">
+              <TrendingUp className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <p>Nenhum registro de peso encontrado</p>
+              <p className="text-sm">Registre seu peso para acompanhar a evolução</p>
+            </div>
+          </div>
+        ) : (
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis 
+                  dataKey="date" 
+                  className="text-muted-foreground"
+                  fontSize={12}
                 />
-              )}
-              <Line 
-                type="monotone" 
-                dataKey="peso" 
-                stroke="hsl(var(--primary))" 
-                strokeWidth={3}
-                dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 5 }}
-                activeDot={{ r: 7, stroke: 'hsl(var(--primary))', strokeWidth: 2 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+                <YAxis 
+                  className="text-muted-foreground" 
+                  fontSize={12}
+                  domain={['dataMin - 2', 'dataMax + 2']}
+                />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                  formatter={(value: number) => [`${value}kg`, 'Peso']}
+                />
+                {metaPeso && (
+                  <ReferenceLine 
+                    y={metaPeso} 
+                    stroke="hsl(var(--destructive))" 
+                    strokeDasharray="5 5"
+                    label={{ value: `Meta: ${metaPeso}kg`, position: "top" }}
+                  />
+                )}
+                <Line 
+                  type="monotone" 
+                  dataKey="peso" 
+                  stroke="hsl(var(--primary))" 
+                  strokeWidth={3}
+                  dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 5 }}
+                  activeDot={{ r: 7, stroke: 'hsl(var(--primary))', strokeWidth: 2 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
