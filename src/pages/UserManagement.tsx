@@ -133,12 +133,35 @@ export default function UserManagement() {
   const handleSaveEdit = async () => {
     if (!editingUsuario) return;
     
-    // Both admin and socio can edit users
-    const canEdit = userProfile?.tipo_usuario === 'gestor' || userProfile?.tipo_usuario === 'socio';
+    // Only admin (gestor) can edit users - SECURITY FIX
+    const canEdit = userProfile?.tipo_usuario === 'gestor';
     if (!canEdit) return;
 
+    // SECURITY: Prevent privilege escalation - only gestores can create other gestores
+    const isPromotingToGestor = editingUsuario.tipo_usuario === 'gestor' && userProfile?.tipo_usuario !== 'gestor';
+    if (isPromotingToGestor) {
+      toast({
+        title: "Erro de Segurança",
+        description: "Apenas gestores podem promover usuários a gestor",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      // Update usuario with tipo_usuario only
+      // Log the admin action for audit purposes
+      await supabase.rpc('log_admin_action', {
+        action_type: 'user_update',
+        target_user_id: editingUsuario.id,
+        target_email: editingUsuario.email,
+        action_details: {
+          old_tipo: usuarios.find(u => u.id === editingUsuario.id)?.tipo_usuario,
+          new_tipo: editingUsuario.tipo_usuario,
+          updated_fields: ['nome_completo', 'email', 'tipo_usuario', 'celular', 'peso_atual_kg']
+        }
+      });
+
+      // Update usuario with security validation
       const { error: usuarioError } = await supabase
         .from('usuarios')
         .update({
