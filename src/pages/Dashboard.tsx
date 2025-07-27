@@ -409,6 +409,7 @@ export default function Dashboard() {
             data={nutritionData}
             period={nutritionPeriod}
             onPeriodChange={handleNutritionPeriodChange}
+            metaCalorias={dashboardData?.meta_calorias}
           />
           <WeightChart
             data={weightData}
