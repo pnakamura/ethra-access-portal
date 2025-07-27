@@ -29,10 +29,19 @@ interface Usuario {
   plano_id?: string | null;
   whatsapp_id?: string | null;
   admin_responsavel_id?: string | null;
+  nome_plano?: string | null;
+}
+
+interface Plano {
+  id: string;
+  nome_plano: string;
+  valor: number;
+  ativo: boolean;
 }
 
 export default function UserManagement() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [planos, setPlanos] = useState<Plano[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingUsuario, setEditingUsuario] = useState<Usuario | null>(null);
   const [deleteUsuario, setDeleteUsuario] = useState<Usuario | null>(null);
@@ -100,7 +109,7 @@ export default function UserManagement() {
         return;
       }
 
-      await loadUsuarios();
+      await Promise.all([loadUsuarios(), loadPlanos()]);
     } catch (error) {
       console.error('Erro na verificação de autenticação:', error);
       window.location.href = '/auth';
@@ -111,12 +120,23 @@ export default function UserManagement() {
     try {
       const { data: usuarios, error: usuariosError } = await supabase
         .from('usuarios')
-        .select('*')
+        .select(`
+          *,
+          planos:plano_id (
+            nome_plano
+          )
+        `)
         .order('atualizado_em', { ascending: false });
 
       if (usuariosError) throw usuariosError;
       
-      setUsuarios(usuarios || []);
+      // Map the joined data to include nome_plano
+      const usuariosWithPlanos = usuarios?.map(usuario => ({
+        ...usuario,
+        nome_plano: usuario.planos?.nome_plano || null
+      })) || [];
+      
+      setUsuarios(usuariosWithPlanos);
     } catch (error) {
       console.error('Erro ao carregar usuários:', error);
       toast({
@@ -126,6 +146,28 @@ export default function UserManagement() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPlanos = async () => {
+    try {
+      const { data: planos, error: planosError } = await supabase
+        .from('planos')
+        .select('*')
+        .eq('ativo', true)
+        .is('deletado_em', null)
+        .order('nome_plano');
+
+      if (planosError) throw planosError;
+      
+      setPlanos(planos || []);
+    } catch (error) {
+      console.error('Erro ao carregar planos:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao carregar planos",
+        variant: "destructive",
+      });
     }
   };
 
@@ -176,7 +218,7 @@ export default function UserManagement() {
         action_details: {
           old_tipo: usuarios.find(u => u.id === editingUsuario.id)?.tipo_usuario,
           new_tipo: editingUsuario.tipo_usuario,
-          updated_fields: ['nome_completo', 'email', 'tipo_usuario', 'celular', 'peso_atual_kg']
+          updated_fields: ['nome_completo', 'email', 'tipo_usuario', 'celular', 'peso_atual_kg', 'plano_id']
         }
       });
 
@@ -189,6 +231,7 @@ export default function UserManagement() {
           tipo_usuario: editingUsuario.tipo_usuario as 'cliente' | 'socio' | 'gestor' | 'dependente',
           celular: editingUsuario.celular,
           peso_atual_kg: editingUsuario.peso_atual_kg,
+          plano_id: editingUsuario.plano_id,
           atualizado_em: new Date().toISOString(),
         })
         .eq('id', editingUsuario.id);
@@ -511,6 +554,29 @@ export default function UserManagement() {
                     }
                     className="col-span-3"
                   />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="plano_id" className="text-right">
+                    Plano
+                  </Label>
+                  <select
+                    id="plano_id"
+                    value={editingUsuario.plano_id || ''}
+                    onChange={(e) =>
+                      setEditingUsuario({
+                        ...editingUsuario,
+                        plano_id: e.target.value || null,
+                      })
+                    }
+                    className="col-span-3 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="">Sem plano</option>
+                    {planos.map((plano) => (
+                      <option key={plano.id} value={plano.id}>
+                        {plano.nome_plano} - R$ {plano.valor}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             )}

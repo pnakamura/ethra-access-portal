@@ -12,6 +12,7 @@ interface Usuario {
   email: string | null;
   tipo_usuario: 'cliente' | 'socio' | 'gestor' | 'dependente' | null;
   atualizado_em: string | null;
+  nome_plano?: string | null;
 }
 
 interface UserTableProps {
@@ -54,7 +55,7 @@ export function UserTable({
                     <TableHead>Nome Completo</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Função</TableHead>
-                    <TableHead>Data de Criação</TableHead>
+                    <TableHead>Plano</TableHead>
                     <TableHead>Última Atualização</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -72,7 +73,11 @@ export function UserTable({
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {usuario.atualizado_em ? new Date(usuario.atualizado_em).toLocaleDateString('pt-BR') : 'N/A'}
+                        {usuario.nome_plano ? (
+                          <Badge variant="secondary">{usuario.nome_plano}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground">Sem plano</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {usuario.atualizado_em ? new Date(usuario.atualizado_em).toLocaleDateString('pt-BR') : 'N/A'}
@@ -120,6 +125,15 @@ export function UserTable({
                         <Badge variant={getRoleBadgeVariant(usuario.tipo_usuario) as any}>
                           {getRoleDisplayName(usuario.tipo_usuario)}
                         </Badge>
+                      </div>
+                      
+                      <div className="text-sm">
+                        <span className="text-muted-foreground">Plano: </span>
+                        {usuario.nome_plano ? (
+                          <Badge variant="secondary" className="text-xs">{usuario.nome_plano}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground">Sem plano</span>
+                        )}
                       </div>
                       
                       <div className="text-xs text-muted-foreground">
