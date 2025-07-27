@@ -133,18 +133,18 @@ export function RecentMeals({ userId }: RecentMealsProps) {
     return (
       <Card className="bg-card-dark border-primary/20">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <CardTitle className="flex items-center gap-2">
             <Utensils className="h-5 w-5" />
             Refeições do Dia
           </CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-lg border">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <Input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-auto text-sm"
+              className="w-36 h-8 text-sm border-0 bg-transparent p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
           </div>
         </div>
@@ -165,10 +165,21 @@ export function RecentMeals({ userId }: RecentMealsProps) {
   return (
     <Card className="bg-card-dark border-primary/20">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Utensils className="h-5 w-5" />
-          Refeições Recentes
-        </CardTitle>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <CardTitle className="flex items-center gap-2">
+            <Utensils className="h-5 w-5" />
+            Refeições do Dia
+          </CardTitle>
+          <div className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-lg border">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-36 h-8 text-sm border-0 bg-transparent p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+            />
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         {meals.length === 0 ? (
