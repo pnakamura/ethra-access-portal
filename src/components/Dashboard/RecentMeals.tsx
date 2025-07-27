@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Utensils, Calendar, Flame, Apple } from 'lucide-react';
+import { ChevronDown, Utensils, Calendar, Flame, Apple, Wheat, Droplets } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface MealData {
@@ -15,6 +15,7 @@ interface MealData {
   gorduras: number | null;
   descricao_ia: string | null;
   categoria_refeicao_id: string | null;
+  categoria_nome: string | null;
 }
 
 interface RecentMealsProps {
@@ -37,14 +38,28 @@ export function RecentMeals({ userId }: RecentMealsProps) {
       setLoading(true);
       const { data, error } = await supabase
         .from('informacoes_nutricionais')
-        .select('id, data_registro, calorias, proteinas, carboidratos, gorduras, descricao_ia, categoria_refeicao_id')
+        .select(`
+          id, 
+          data_registro, 
+          calorias, 
+          proteinas, 
+          carboidratos, 
+          gorduras, 
+          descricao_ia, 
+          categoria_refeicao_id,
+          categorias_refeicao!inner(nome)
+        `)
         .eq('usuario_id', userId)
         .is('deletado_em', null)
         .order('data_registro', { ascending: false })
         .limit(10);
 
       if (!error && data) {
-        setMeals(data);
+        const mealsWithCategory = data.map(meal => ({
+          ...meal,
+          categoria_nome: meal.categorias_refeicao?.nome || null
+        }));
+        setMeals(mealsWithCategory);
       }
     } catch (error) {
       console.error('Erro ao carregar refeições recentes:', error);
@@ -63,24 +78,45 @@ export function RecentMeals({ userId }: RecentMealsProps) {
     });
   };
 
-  const getMealTypeColor = (categoria: string | null) => {
-    switch (categoria) {
-      case 'café_da_manhã': return 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30';
-      case 'almoço': return 'bg-orange-500/20 text-orange-700 border-orange-500/30';
-      case 'jantar': return 'bg-blue-500/20 text-blue-700 border-blue-500/30';
-      case 'lanche': return 'bg-green-500/20 text-green-700 border-green-500/30';
-      default: return 'bg-gray-500/20 text-gray-700 border-gray-500/30';
+  const getMealTypeColor = (categoryName: string | null) => {
+    if (!categoryName) return 'bg-gray-500/20 text-gray-700 border-gray-500/30';
+    
+    const name = categoryName.toLowerCase();
+    if (name.includes('café') || name.includes('manhã')) {
+      return 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30';
     }
+    if (name.includes('almoço')) {
+      return 'bg-orange-500/20 text-orange-700 border-orange-500/30';
+    }
+    if (name.includes('jantar') || name.includes('ceia')) {
+      return 'bg-blue-500/20 text-blue-700 border-blue-500/30';
+    }
+    if (name.includes('lanche')) {
+      return 'bg-green-500/20 text-green-700 border-green-500/30';
+    }
+    return 'bg-purple-500/20 text-purple-700 border-purple-500/30';
   };
 
-  const getMealTypeName = (categoria: string | null) => {
-    switch (categoria) {
-      case 'café_da_manhã': return 'Café da Manhã';
-      case 'almoço': return 'Almoço';
-      case 'jantar': return 'Jantar';
-      case 'lanche': return 'Lanche';
-      default: return 'Refeição';
+  const parseAIDescription = (descricaoIa: string | null) => {
+    if (!descricaoIa) return null;
+
+    try {
+      // Try to parse as JSON first
+      const parsed = JSON.parse(descricaoIa);
+      if (parsed['resposta openAI']) {
+        return parsed['resposta openAI'];
+      }
+    } catch {
+      // If not JSON, return as is
     }
+
+    // Clean up markdown formatting
+    return descricaoIa
+      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold
+      .replace(/\*(.*?)\*/g, '$1') // Remove italic
+      .replace(/#+\s*/g, '') // Remove headers
+      .replace(/\n\n+/g, '\n\n') // Normalize line breaks
+      .trim();
   };
 
   if (loading) {
@@ -133,26 +169,38 @@ export function RecentMeals({ userId }: RecentMealsProps) {
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm font-medium">{formatDate(meal.data_registro)}</span>
-                        {meal.categoria_refeicao_id && (
+                        {meal.categoria_nome && (
                           <Badge 
                             variant="outline" 
-                            className={getMealTypeColor(meal.categoria_refeicao_id)}
+                            className={getMealTypeColor(meal.categoria_nome)}
                           >
-                            {getMealTypeName(meal.categoria_refeicao_id)}
+                            {meal.categoria_nome}
                           </Badge>
                         )}
                       </div>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         {meal.calorias && (
                           <div className="flex items-center gap-1">
-                            <Flame className="h-3 w-3" />
+                            <Flame className="h-3 w-3 text-red-500" />
                             <span>{Math.round(meal.calorias)} kcal</span>
                           </div>
                         )}
                         {meal.proteinas && (
                           <div className="flex items-center gap-1">
-                            <Apple className="h-3 w-3" />
+                            <Apple className="h-3 w-3 text-blue-500" />
                             <span>{Math.round(meal.proteinas)}g prot</span>
+                          </div>
+                        )}
+                        {meal.carboidratos && (
+                          <div className="flex items-center gap-1">
+                            <Wheat className="h-3 w-3 text-yellow-500" />
+                            <span>{Math.round(meal.carboidratos)}g carb</span>
+                          </div>
+                        )}
+                        {meal.gorduras && (
+                          <div className="flex items-center gap-1">
+                            <Droplets className="h-3 w-3 text-green-500" />
+                            <span>{Math.round(meal.gorduras)}g gord</span>
                           </div>
                         )}
                       </div>
@@ -168,11 +216,13 @@ export function RecentMeals({ userId }: RecentMealsProps) {
               <CollapsibleContent className="px-4 pb-4">
                 <div className="mt-3 space-y-3">
                   {meal.descricao_ia && (
-                    <div className="p-3 bg-muted/50 rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-1 font-medium">
-                        Análise Nutricional:
+                    <div className="p-4 bg-muted/50 rounded-lg border border-border/50">
+                      <p className="text-sm font-semibold mb-2 text-foreground">
+                        💡 Análise Nutricional IA
                       </p>
-                      <p className="text-sm">{meal.descricao_ia}</p>
+                      <div className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+                        {parseAIDescription(meal.descricao_ia)}
+                      </div>
                     </div>
                   )}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
