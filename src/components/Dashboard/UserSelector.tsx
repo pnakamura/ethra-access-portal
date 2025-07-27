@@ -29,9 +29,9 @@ export function UserSelector({ currentUser, selectedUserId, onUserChange }: User
     try {
       setLoading(true);
       
-      // Only gestores and socios can see other users
-      if (currentUser.tipo_usuario === 'gestor') {
-        // Gestores can see all users
+      // Hierarchy: socio > gestor > cliente/dependente
+      if (currentUser.tipo_usuario === 'socio') {
+        // Sócios can see all users
         const { data, error } = await supabase
           .from('usuarios')
           .select('id, nome_completo, email, tipo_usuario')
@@ -40,8 +40,8 @@ export function UserSelector({ currentUser, selectedUserId, onUserChange }: User
         if (!error && data) {
           setUsers(data);
         }
-      } else if (currentUser.tipo_usuario === 'socio') {
-        // Socios can see their own dependents and clients
+      } else if (currentUser.tipo_usuario === 'gestor') {
+        // Gestores can see only dependents and clients
         const { data, error } = await supabase
           .from('usuarios')
           .select('id, nome_completo, email, tipo_usuario')

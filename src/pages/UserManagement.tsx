@@ -82,12 +82,12 @@ export default function UserManagement() {
 
       setUserProfile(profile);
       
-      // Check if user is admin or socio
+      // Check if user is admin or socio - correct hierarchy: socio > gestor  
       const userIsAdmin = profile.tipo_usuario === 'gestor';
       const userIsSocio = profile.tipo_usuario === 'socio';
-      setIsAdmin(userIsAdmin);
+      setIsAdmin(userIsAdmin || userIsSocio); // Both can access, but socio has higher privileges
       
-      // For access control, both admin and socio can access
+      // For access control, both gestor and socio can access
       const canAccess = userIsAdmin || userIsSocio;
       
       if (!canAccess) {
@@ -137,16 +137,31 @@ export default function UserManagement() {
   const handleSaveEdit = async () => {
     if (!editingUsuario) return;
     
-    // Only admin (gestor) can edit users - SECURITY FIX
-    const canEdit = userProfile?.tipo_usuario === 'gestor';
-    if (!canEdit) return;
-
-    // SECURITY: Prevent privilege escalation - only gestores can create other gestores
-    const isPromotingToGestor = editingUsuario.tipo_usuario === 'gestor' && userProfile?.tipo_usuario !== 'gestor';
-    if (isPromotingToGestor) {
+    // Hierarchy: socio > gestor - sócios can edit all, gestores only dependents
+    const isSocio = userProfile?.tipo_usuario === 'socio';
+    const isGestor = userProfile?.tipo_usuario === 'gestor';
+    
+    // Find original user to check permissions
+    const originalUser = usuarios.find(u => u.id === editingUsuario.id);
+    if (!originalUser) return;
+    
+    // Check if user can edit this specific user type (based on original user type)
+    const canEdit = isSocio || (isGestor && originalUser.tipo_usuario === 'dependente');
+    if (!canEdit) {
       toast({
-        title: "Erro de Segurança",
-        description: "Apenas gestores podem promover usuários a gestor",
+        title: "Acesso Negado",
+        description: isSocio ? "Erro inesperado" : "Gestores podem editar apenas dependentes",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // SECURITY: Prevent privilege escalation - gestores cannot promote users to socio or gestor
+    const isPromotingToHigherRole = isGestor && ['socio', 'gestor'].includes(editingUsuario.tipo_usuario || '');
+    if (isPromotingToHigherRole) {
+      toast({
+        title: "Erro de Segurança", 
+        description: "Gestores não podem promover usuários a sócio ou gestor",
         variant: "destructive",
       });
       return;

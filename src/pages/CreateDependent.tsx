@@ -65,7 +65,7 @@ export default function CreateDependent() {
 
       setUserProfile(profile);
       
-      // Check if user is socio or gestor
+      // Hierarchy: socio > gestor - both can create dependents
       const userIsAuthorized = profile.tipo_usuario === 'gestor' || profile.tipo_usuario === 'socio';
       setIsAuthorized(userIsAuthorized);
       

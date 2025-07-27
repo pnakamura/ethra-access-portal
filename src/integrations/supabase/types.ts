@@ -905,6 +905,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      can_manage_user_type: {
+        Args: { target_user_type: string }
+        Returns: boolean
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -934,6 +938,10 @@ export type Database = {
           total_dependentes: number
           usuarios_ativos_30_dias: number
         }[]
+      }
+      has_higher_or_equal_privilege: {
+        Args: { target_user_id: string }
+        Returns: boolean
       }
       is_admin: {
         Args: { user_id?: string }
