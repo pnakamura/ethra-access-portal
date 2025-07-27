@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, Utensils, Calendar, Flame, Apple, Wheat, Droplets } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,16 +27,24 @@ export function RecentMeals({ userId }: RecentMealsProps) {
   const [meals, setMeals] = useState<MealData[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedMeal, setExpandedMeal] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>(
+    new Date().toISOString().split('T')[0]
+  );
 
   useEffect(() => {
     if (userId) {
-      loadRecentMeals();
+      loadMealsForDate();
     }
-  }, [userId]);
+  }, [userId, selectedDate]);
 
-  const loadRecentMeals = async () => {
+  const loadMealsForDate = async () => {
     try {
       setLoading(true);
+      const startDate = new Date(selectedDate);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(selectedDate);
+      endDate.setHours(23, 59, 59, 999);
+
       const { data, error } = await supabase
         .from('informacoes_nutricionais')
         .select(`
@@ -51,8 +60,9 @@ export function RecentMeals({ userId }: RecentMealsProps) {
         `)
         .eq('usuario_id', userId)
         .is('deletado_em', null)
-        .order('data_registro', { ascending: false })
-        .limit(10);
+        .gte('data_registro', startDate.toISOString())
+        .lte('data_registro', endDate.toISOString())
+        .order('data_registro', { ascending: false });
 
       if (!error && data) {
         const mealsWithCategory = data.map(meal => ({
@@ -62,7 +72,7 @@ export function RecentMeals({ userId }: RecentMealsProps) {
         setMeals(mealsWithCategory);
       }
     } catch (error) {
-      console.error('Erro ao carregar refeições recentes:', error);
+      console.error('Erro ao carregar refeições:', error);
     } finally {
       setLoading(false);
     }
@@ -122,12 +132,23 @@ export function RecentMeals({ userId }: RecentMealsProps) {
   if (loading) {
     return (
       <Card className="bg-card-dark border-primary/20">
-        <CardHeader>
+      <CardHeader>
+        <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Utensils className="h-5 w-5" />
-            Refeições Recentes
+            Refeições do Dia
           </CardTitle>
-        </CardHeader>
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-auto text-sm"
+            />
+          </div>
+        </div>
+      </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
@@ -153,7 +174,8 @@ export function RecentMeals({ userId }: RecentMealsProps) {
         {meals.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Utensils className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>Nenhuma refeição registrada ainda</p>
+            <p>Nenhuma refeição registrada para este dia</p>
+            <p className="text-xs mt-1">Selecione outro dia para visualizar</p>
           </div>
         ) : (
           meals.map((meal) => (
