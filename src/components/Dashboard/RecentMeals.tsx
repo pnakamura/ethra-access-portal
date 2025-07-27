@@ -40,10 +40,10 @@ export function RecentMeals({ userId }: RecentMealsProps) {
   const loadMealsForDate = async () => {
     try {
       setLoading(true);
-      const startDate = new Date(selectedDate);
-      startDate.setHours(0, 0, 0, 0);
-      const endDate = new Date(selectedDate);
-      endDate.setHours(23, 59, 59, 999);
+      
+      // Construir as datas corretamente para evitar problemas de timezone
+      const startDate = `${selectedDate}T00:00:00.000Z`;
+      const endDate = `${selectedDate}T23:59:59.999Z`;
 
       const { data, error } = await supabase
         .from('informacoes_nutricionais')
@@ -60,8 +60,8 @@ export function RecentMeals({ userId }: RecentMealsProps) {
         `)
         .eq('usuario_id', userId)
         .is('deletado_em', null)
-        .gte('data_registro', startDate.toISOString())
-        .lte('data_registro', endDate.toISOString())
+        .gte('data_registro', startDate)
+        .lte('data_registro', endDate)
         .order('data_registro', { ascending: false });
 
       if (!error && data) {
