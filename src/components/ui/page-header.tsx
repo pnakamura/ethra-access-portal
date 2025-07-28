@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 interface PageHeaderProps {
   title: string;
@@ -28,11 +29,13 @@ export function PageHeader({
   isRefreshing = false,
   className,
 }: PageHeaderProps) {
+  const navigate = useNavigate();
+  
   const handleBack = () => {
     if (onBack) {
       onBack();
     } else {
-      window.location.href = backHref;
+      navigate(backHref);
     }
   };
 
