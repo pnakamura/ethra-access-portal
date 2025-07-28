@@ -50,6 +50,10 @@ export default function UserManagement() {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<Usuario | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isProfileMode, setIsProfileMode] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   // Filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [tipoUsuarioFilter, setTipoUsuarioFilter] = useState('all');
@@ -94,10 +98,12 @@ export default function UserManagement() {
       // Check if user is admin or socio - correct hierarchy: socio > gestor  
       const userIsAdmin = profile.tipo_usuario === 'gestor';
       const userIsSocio = profile.tipo_usuario === 'socio';
-      setIsAdmin(userIsAdmin || userIsSocio); // Both can access, but socio has higher privileges
+      const isClienteOrDependente = profile.tipo_usuario === 'cliente' || profile.tipo_usuario === 'dependente';
+      setIsAdmin(userIsAdmin || userIsSocio);
+      setIsProfileMode(isClienteOrDependente);
       
-      // For access control, both gestor and socio can access
-      const canAccess = userIsAdmin || userIsSocio;
+      // All authenticated users can access - different views based on role
+      const canAccess = userIsAdmin || userIsSocio || isClienteOrDependente;
       
       if (!canAccess) {
         toast({
@@ -109,7 +115,14 @@ export default function UserManagement() {
         return;
       }
 
-      await Promise.all([loadUsuarios(), loadPlanos()]);
+      // Only load all users data if user has admin privileges
+      if (userIsAdmin || userIsSocio) {
+        await Promise.all([loadUsuarios(), loadPlanos()]);
+      } else {
+        // For cliente/dependente, only load plans for their own profile editing
+        await loadPlanos();
+        setLoading(false);
+      }
     } catch (error) {
       console.error('Erro na verificação de autenticação:', error);
       window.location.href = '/auth';
@@ -179,84 +192,97 @@ export default function UserManagement() {
   const handleSaveEdit = async () => {
     if (!editingUsuario) return;
     
-    // Hierarchy: socio > gestor - sócios can edit all, gestores only dependents
     const isSocio = userProfile?.tipo_usuario === 'socio';
     const isGestor = userProfile?.tipo_usuario === 'gestor';
+    const isOwnProfile = editingUsuario.id === user?.id;
     
-    // Find original user to check permissions
-    const originalUser = usuarios.find(u => u.id === editingUsuario.id);
-    if (!originalUser) return;
-    
-    // Check if user can edit this specific user type (based on original user type)
-    const canEdit = isSocio || (isGestor && originalUser.tipo_usuario === 'dependente');
-    if (!canEdit) {
+    // For profile mode (cliente/dependente), only allow editing own profile
+    if (isProfileMode && !isOwnProfile) {
       toast({
         title: "Acesso Negado",
-        description: isSocio ? "Erro inesperado" : "Gestores podem editar apenas dependentes",
+        description: "Você só pode editar seu próprio perfil",
         variant: "destructive",
       });
       return;
     }
+    
+    // For admin mode, apply original permissions
+    if (!isProfileMode) {
+      const originalUser = usuarios.find(u => u.id === editingUsuario.id);
+      if (!originalUser) return;
+      
+      const canEdit = isSocio || (isGestor && originalUser.tipo_usuario === 'dependente');
+      if (!canEdit) {
+        toast({
+          title: "Acesso Negado",
+          description: isSocio ? "Erro inesperado" : "Gestores podem editar apenas dependentes",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    // SECURITY: Prevent privilege escalation - gestores cannot promote users to socio or gestor
-    const isPromotingToHigherRole = isGestor && ['socio', 'gestor'].includes(editingUsuario.tipo_usuario || '');
-    if (isPromotingToHigherRole) {
-      toast({
-        title: "Erro de Segurança", 
-        description: "Gestores não podem promover usuários a sócio ou gestor",
-        variant: "destructive",
-      });
-      return;
+      // SECURITY: Prevent privilege escalation
+      const isPromotingToHigherRole = isGestor && ['socio', 'gestor'].includes(editingUsuario.tipo_usuario || '');
+      if (isPromotingToHigherRole) {
+        toast({
+          title: "Erro de Segurança", 
+          description: "Gestores não podem promover usuários a sócio ou gestor",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     try {
-      // Log the admin action for audit purposes
-      await supabase.rpc('log_admin_action', {
-        action_type: 'user_update',
-        target_user_id: editingUsuario.id,
-        target_email: editingUsuario.email,
-        action_details: {
-          old_tipo: usuarios.find(u => u.id === editingUsuario.id)?.tipo_usuario,
-          new_tipo: editingUsuario.tipo_usuario,
-          updated_fields: ['nome_completo', 'email', 'tipo_usuario', 'celular', 'peso_atual_kg', 'plano_id']
-        }
-      });
+      // Prepare update data - in profile mode, exclude administrative fields
+      const updateData: any = {
+        nome_completo: editingUsuario.nome_completo,
+        email: editingUsuario.email,
+        celular: editingUsuario.celular,
+        peso_atual_kg: editingUsuario.peso_atual_kg,
+        atualizado_em: new Date().toISOString(),
+      };
+
+      // Only include admin fields if not in profile mode
+      if (!isProfileMode) {
+        updateData.tipo_usuario = editingUsuario.tipo_usuario as 'cliente' | 'socio' | 'gestor' | 'dependente';
+        updateData.plano_id = editingUsuario.plano_id;
+        
+        // Log admin action for audit purposes
+        await supabase.rpc('log_admin_action', {
+          action_type: 'user_update',
+          target_user_id: editingUsuario.id,
+          target_email: editingUsuario.email,
+          action_details: {
+            old_tipo: usuarios.find(u => u.id === editingUsuario.id)?.tipo_usuario,
+            new_tipo: editingUsuario.tipo_usuario,
+            updated_fields: ['nome_completo', 'email', 'tipo_usuario', 'celular', 'peso_atual_kg', 'plano_id']
+          }
+        });
+      }
 
       // Update usuario with security validation
       const { error: usuarioError } = await supabase
         .from('usuarios')
-        .update({
-          nome_completo: editingUsuario.nome_completo,
-          email: editingUsuario.email,
-          tipo_usuario: editingUsuario.tipo_usuario as 'cliente' | 'socio' | 'gestor' | 'dependente',
-          celular: editingUsuario.celular,
-          peso_atual_kg: editingUsuario.peso_atual_kg,
-          plano_id: editingUsuario.plano_id,
-          atualizado_em: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', editingUsuario.id);
 
       if (usuarioError) throw usuarioError;
 
-      // Log admin action
-      await supabase.rpc('log_admin_action', {
-        action_type: 'UPDATE_USER',
-        target_user_id: editingUsuario.id,
-        target_email: editingUsuario.email,
-        action_details: {
-          updated_fields: ['nome_completo', 'email', 'tipo_usuario'],
-          new_tipo_usuario: editingUsuario.tipo_usuario
-        }
-      });
-
       toast({
         title: "Sucesso",
-        description: "Usuário atualizado com sucesso",
+        description: isProfileMode ? "Perfil atualizado com sucesso" : "Usuário atualizado com sucesso",
       });
 
       setIsEditDialogOpen(false);
       setEditingUsuario(null);
-      await loadUsuarios();
+      
+      if (isProfileMode) {
+        // Reload user profile data
+        await checkAuthAndLoadData();
+      } else {
+        await loadUsuarios();
+      }
     } catch (error) {
       console.error('Erro ao atualizar perfil:', error);
       toast({
@@ -340,6 +366,59 @@ export default function UserManagement() {
     }
   };
 
+  const handleChangePassword = async () => {
+    if (!newPassword || !confirmPassword) {
+      toast({
+        title: "Erro",
+        description: "Por favor, preencha todos os campos",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Erro",
+        description: "As senhas não coincidem",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "Erro",
+        description: "A senha deve ter pelo menos 6 caracteres",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Senha alterada com sucesso",
+      });
+
+      setIsPasswordDialogOpen(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      console.error('Erro ao alterar senha:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao alterar senha",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.href = '/';
@@ -401,8 +480,9 @@ export default function UserManagement() {
     );
   }
 
-  // Both admin and socio can access this page
-  const canAccessPage = userProfile?.tipo_usuario === 'gestor' || userProfile?.tipo_usuario === 'socio';
+  // All authenticated users can access, but with different views
+  const canAccessPage = userProfile?.tipo_usuario === 'gestor' || userProfile?.tipo_usuario === 'socio' || 
+                       userProfile?.tipo_usuario === 'cliente' || userProfile?.tipo_usuario === 'dependente';
   if (!canAccessPage) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -426,8 +506,8 @@ export default function UserManagement() {
         <Breadcrumbs />
         
         <PageHeader
-          title="Gerenciamento de Usuários"
-          description="Gerencie todos os usuários cadastrados no sistema"
+          title={isProfileMode ? "Meu Perfil" : "Gerenciamento de Usuários"}
+          description={isProfileMode ? "Visualize e edite suas informações pessoais" : "Gerencie todos os usuários cadastrados no sistema"}
           showBackButton
         >
           {userProfile && (
@@ -440,6 +520,17 @@ export default function UserManagement() {
             </div>
           )}
           <div className="flex flex-col sm:flex-row gap-2 mt-4">
+            {isProfileMode && (
+              <>
+                <Button onClick={() => handleEdit(userProfile)} size="sm">
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Editar Perfil
+                </Button>
+                <Button onClick={() => setIsPasswordDialogOpen(true)} variant="outline" size="sm">
+                  Alterar Senha
+                </Button>
+              </>
+            )}
             <Button onClick={handleLogout} variant="destructive" size="sm">
               <LogOut className="h-4 w-4 mr-2" />
               Sair
@@ -447,41 +538,90 @@ export default function UserManagement() {
           </div>
         </PageHeader>
 
-        {/* Estatísticas dos usuários */}
-        <UserStats />
+        {/* Admin view - show stats, filters and user table */}
+        {!isProfileMode && (
+          <>
+            <UserStats />
 
-        {/* Filtros */}
-        <UserFilters
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          tipoUsuarioFilter={tipoUsuarioFilter}
-          setTipoUsuarioFilter={setTipoUsuarioFilter}
-          dataInicioFilter={dataInicioFilter}
-          setDataInicioFilter={setDataInicioFilter}
-          dataFimFilter={dataFimFilter}
-          setDataFimFilter={setDataFimFilter}
-          onClearFilters={() => {
-            setSearchTerm('');
-            setTipoUsuarioFilter('all');
-            setDataInicioFilter('');
-            setDataFimFilter('');
-          }}
-        />
+            <UserFilters
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              tipoUsuarioFilter={tipoUsuarioFilter}
+              setTipoUsuarioFilter={setTipoUsuarioFilter}
+              dataInicioFilter={dataInicioFilter}
+              setDataInicioFilter={setDataInicioFilter}
+              dataFimFilter={dataFimFilter}
+              setDataFimFilter={setDataFimFilter}
+              onClearFilters={() => {
+                setSearchTerm('');
+                setTipoUsuarioFilter('all');
+                setDataInicioFilter('');
+                setDataFimFilter('');
+              }}
+            />
 
-        <UserTable
-          usuarios={filteredUsuarios}
-          user={user}
-          onEdit={handleEdit}
-          onDelete={handleDeleteClick}
-          getRoleBadgeVariant={getRoleBadgeVariant}
-          getRoleDisplayName={getRoleDisplayName}
-        />
+            <UserTable
+              usuarios={filteredUsuarios}
+              user={user}
+              onEdit={handleEdit}
+              onDelete={handleDeleteClick}
+              getRoleBadgeVariant={getRoleBadgeVariant}
+              getRoleDisplayName={getRoleDisplayName}
+            />
+          </>
+        )}
+
+        {/* Profile view - show user profile card */}
+        {isProfileMode && userProfile && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Informações do Perfil</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Nome Completo</Label>
+                  <p className="text-sm mt-1">{userProfile.nome_completo || 'Não informado'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Email</Label>
+                  <p className="text-sm mt-1">{userProfile.email || 'Não informado'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Celular</Label>
+                  <p className="text-sm mt-1">{userProfile.celular || 'Não informado'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Peso Atual</Label>
+                  <p className="text-sm mt-1">{userProfile.peso_atual_kg ? `${userProfile.peso_atual_kg} kg` : 'Não informado'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Tipo de Usuário</Label>
+                  <div className="mt-1">
+                    <Badge variant={getRoleBadgeVariant(userProfile.tipo_usuario)}>
+                      {getRoleDisplayName(userProfile.tipo_usuario)}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Última Atualização</Label>
+                  <p className="text-sm mt-1">
+                    {userProfile.atualizado_em 
+                      ? new Date(userProfile.atualizado_em).toLocaleDateString('pt-BR')
+                      : 'Não informado'
+                    }
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Editar Usuário</DialogTitle>
+              <DialogTitle>{isProfileMode ? "Editar Meu Perfil" : "Editar Usuário"}</DialogTitle>
             </DialogHeader>
             {editingUsuario && (
               <div className="grid gap-4 py-4">
@@ -519,27 +659,6 @@ export default function UserManagement() {
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="tipo_usuario" className="text-right">
-                    Tipo Usuário
-                  </Label>
-                  <select
-                    id="tipo_usuario"
-                    value={editingUsuario.tipo_usuario || ''}
-                    onChange={(e) =>
-                      setEditingUsuario({
-                        ...editingUsuario,
-                        tipo_usuario: e.target.value as 'cliente' | 'socio' | 'gestor' | 'dependente',
-                      })
-                    }
-                    className="col-span-3 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  >
-                    <option value="cliente">Cliente</option>
-                    <option value="dependente">Dependente</option>
-                    <option value="socio">Sócio</option>
-                    <option value="gestor">Gestor</option>
-                  </select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="celular" className="text-right">
                     Celular
                   </Label>
@@ -556,28 +675,73 @@ export default function UserManagement() {
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="plano_id" className="text-right">
-                    Plano
+                  <Label htmlFor="peso_atual_kg" className="text-right">
+                    Peso Atual (kg)
                   </Label>
-                  <select
-                    id="plano_id"
-                    value={editingUsuario.plano_id || ''}
+                  <Input
+                    id="peso_atual_kg"
+                    type="number"
+                    step="0.1"
+                    value={editingUsuario.peso_atual_kg || ''}
                     onChange={(e) =>
                       setEditingUsuario({
                         ...editingUsuario,
-                        plano_id: e.target.value || null,
+                        peso_atual_kg: e.target.value ? parseFloat(e.target.value) : null,
                       })
                     }
-                    className="col-span-3 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  >
-                    <option value="">Sem plano</option>
-                    {planos.map((plano) => (
-                      <option key={plano.id} value={plano.id}>
-                        {plano.nome_plano} - R$ {plano.valor}
-                      </option>
-                    ))}
-                  </select>
+                    className="col-span-3"
+                  />
                 </div>
+                
+                {/* Admin-only fields */}
+                {!isProfileMode && (
+                  <>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="tipo_usuario" className="text-right">
+                        Tipo Usuário
+                      </Label>
+                      <select
+                        id="tipo_usuario"
+                        value={editingUsuario.tipo_usuario || ''}
+                        onChange={(e) =>
+                          setEditingUsuario({
+                            ...editingUsuario,
+                            tipo_usuario: e.target.value as 'cliente' | 'socio' | 'gestor' | 'dependente',
+                          })
+                        }
+                        className="col-span-3 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      >
+                        <option value="cliente">Cliente</option>
+                        <option value="dependente">Dependente</option>
+                        <option value="socio">Sócio</option>
+                        <option value="gestor">Gestor</option>
+                      </select>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="plano_id" className="text-right">
+                        Plano
+                      </Label>
+                      <select
+                        id="plano_id"
+                        value={editingUsuario.plano_id || ''}
+                        onChange={(e) =>
+                          setEditingUsuario({
+                            ...editingUsuario,
+                            plano_id: e.target.value || null,
+                          })
+                        }
+                        className="col-span-3 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      >
+                        <option value="">Sem plano</option>
+                        {planos.map((plano) => (
+                          <option key={plano.id} value={plano.id}>
+                            {plano.nome_plano} - R$ {plano.valor}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
+                )}
               </div>
             )}
             <DialogFooter>
@@ -585,6 +749,50 @@ export default function UserManagement() {
                 Cancelar
               </Button>
               <Button onClick={handleSaveEdit}>Salvar Alterações</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Password Change Dialog */}
+        <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Alterar Senha</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="new_password">Nova Senha</Label>
+                <Input
+                  id="new_password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Digite sua nova senha"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="confirm_password">Confirmar Nova Senha</Label>
+                <Input
+                  id="confirm_password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirme sua nova senha"
+                />
+              </div>
+              <div className="text-xs text-muted-foreground">
+                A senha deve ter pelo menos 6 caracteres.
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => {
+                setIsPasswordDialogOpen(false);
+                setNewPassword('');
+                setConfirmPassword('');
+              }}>
+                Cancelar
+              </Button>
+              <Button onClick={handleChangePassword}>Alterar Senha</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
