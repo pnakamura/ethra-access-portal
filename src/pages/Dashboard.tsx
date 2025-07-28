@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, LogOut, Shield, RefreshCw } from 'lucide-react';
+import { ArrowLeft, LogOut, Shield, RefreshCw, Info, User as UserIcon } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 import { DashboardSkeleton } from '@/components/ui/loading-skeleton';
 import { PageHeader } from '@/components/ui/page-header';
@@ -358,6 +359,12 @@ export default function Dashboard() {
                 Gerenciar Usuários
               </Button>
             )}
+            {(userProfile?.tipo_usuario === 'cliente' || userProfile?.tipo_usuario === 'dependente') && (
+              <Button onClick={() => window.location.href = '/users'} variant="outline" size="sm">
+                <UserIcon className="h-4 w-4 mr-2" />
+                Meu Perfil
+              </Button>
+            )}
             <Button onClick={handleLogout} variant="destructive" size="sm">
               <LogOut className="h-4 w-4 mr-2" />
               Sair
@@ -365,8 +372,25 @@ export default function Dashboard() {
           </div>
         </PageHeader>
 
+        {/* Information Alert for Cliente/Dependente Users */}
+        {userProfile && (userProfile.tipo_usuario === 'cliente' || userProfile.tipo_usuario === 'dependente') && (
+          <Alert className="mb-6 border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+            <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <AlertDescription className="text-blue-800 dark:text-blue-200">
+              <strong>Acesso Limitado:</strong> Como {userProfile.tipo_usuario}, você tem acesso apenas ao seu próprio perfil. 
+              Para editar seus dados pessoais, acesse <Button 
+                variant="link" 
+                className="p-0 h-auto text-blue-600 dark:text-blue-400 underline"
+                onClick={() => window.location.href = '/users'}
+              >
+                Gerenciamento de Usuários
+              </Button>. Não é possível criar dependentes.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* User Selector for Managers and Partners */}
-        {userProfile && (
+        {userProfile && (userProfile.tipo_usuario === 'gestor' || userProfile.tipo_usuario === 'socio') && (
           <UserSelector
             currentUser={userProfile}
             selectedUserId={selectedUserId}
