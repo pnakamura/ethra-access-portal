@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { UserPlus, Shield, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface Usuario {
   id: string;
@@ -30,6 +31,7 @@ export default function CreateDependent() {
   const [password, setPassword] = useState('');
   
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     checkAuthAndPermissions();
@@ -39,7 +41,7 @@ export default function CreateDependent() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        window.location.href = '/auth';
+        navigate('/auth');
         return;
       }
       
@@ -59,7 +61,7 @@ export default function CreateDependent() {
           description: "Falha ao verificar permissões do usuário",
           variant: "destructive",
         });
-        window.location.href = '/auth';
+        navigate('/auth');
         return;
       }
 
@@ -75,12 +77,12 @@ export default function CreateDependent() {
           description: "Você não tem permissão para criar dependentes",
           variant: "destructive",
         });
-        window.location.href = '/';
+        navigate('/');
         return;
       }
     } catch (error) {
       console.error('Erro na verificação de autenticação:', error);
-      window.location.href = '/auth';
+      navigate('/auth');
     } finally {
       setLoading(false);
     }
@@ -197,7 +199,7 @@ export default function CreateDependent() {
           <Shield className="h-16 w-16 text-muted-foreground mx-auto" />
           <h1 className="text-2xl font-bold">Acesso Negado</h1>
           <p className="text-muted-foreground">Você não tem permissão para acessar esta página.</p>
-          <Button onClick={() => window.location.href = '/'}>
+          <Button onClick={() => navigate('/')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar ao início
           </Button>
@@ -228,10 +230,10 @@ export default function CreateDependent() {
             )}
           </div>
           <div className="flex gap-4">
-            <Button onClick={() => window.location.href = '/'} variant="outline">
+            <Button onClick={() => navigate('/')} variant="outline">
               Voltar ao Dashboard
             </Button>
-            <Button onClick={() => supabase.auth.signOut().then(() => window.location.href = '/')} variant="destructive">
+            <Button onClick={() => supabase.auth.signOut().then(() => navigate('/'))} variant="destructive">
               Sair
             </Button>
           </div>
@@ -294,7 +296,7 @@ export default function CreateDependent() {
                 <Button 
                   type="button" 
                   variant="outline" 
-                  onClick={() => window.location.href = '/'}
+                  onClick={() => navigate('/')}
                 >
                   Cancelar
                 </Button>

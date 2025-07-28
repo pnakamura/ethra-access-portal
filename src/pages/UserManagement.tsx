@@ -17,6 +17,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { UserFilters } from '@/components/UserManagement/UserFilters';
 import { UserStats } from '@/components/UserManagement/UserStats';
 import { UserTable } from '@/components/UserManagement/UserTable';
+import { useNavigate } from 'react-router-dom';
 
 interface Usuario {
   id: string;
@@ -60,6 +61,7 @@ export default function UserManagement() {
   const [dataInicioFilter, setDataInicioFilter] = useState('');
   const [dataFimFilter, setDataFimFilter] = useState('');
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     checkAuthAndLoadData();
@@ -69,7 +71,7 @@ export default function UserManagement() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        window.location.href = '/auth';
+        navigate('/auth');
         return;
       }
       
@@ -89,7 +91,7 @@ export default function UserManagement() {
           description: "Falha ao verificar permissões do usuário",
           variant: "destructive",
         });
-        window.location.href = '/auth';
+        navigate('/auth');
         return;
       }
 
@@ -111,7 +113,7 @@ export default function UserManagement() {
           description: "Você não tem permissão para acessar esta página",
           variant: "destructive",
         });
-        window.location.href = '/';
+        navigate('/');
         return;
       }
 
@@ -125,7 +127,7 @@ export default function UserManagement() {
       }
     } catch (error) {
       console.error('Erro na verificação de autenticação:', error);
-      window.location.href = '/auth';
+      navigate('/auth');
     }
   };
 
@@ -421,7 +423,7 @@ export default function UserManagement() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    window.location.href = '/';
+    navigate('/');
   };
 
   const getRoleBadgeVariant = (tipoUsuario: string | null) => {
@@ -490,7 +492,7 @@ export default function UserManagement() {
           <Shield className="h-16 w-16 text-muted-foreground mx-auto" />
           <h1 className="text-2xl font-bold">Acesso Negado</h1>
           <p className="text-muted-foreground">Você não tem permissão para acessar esta página.</p>
-          <Button onClick={() => window.location.href = '/'}>
+          <Button onClick={() => navigate('/')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar ao início
           </Button>

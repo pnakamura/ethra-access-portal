@@ -17,6 +17,7 @@ import { UserSelector } from '@/components/Dashboard/UserSelector';
 import { RecentMeals } from '@/components/Dashboard/RecentMeals';
 import { GoalsConfig } from '@/components/Dashboard/GoalsConfig';
 import { NutritionInsights } from '@/components/Dashboard/NutritionInsights';
+import { useNavigate } from 'react-router-dom';
 
 interface DashboardData {
   peso_atual: number;
@@ -52,6 +53,7 @@ export default function Dashboard() {
   const [nutritionPeriod, setNutritionPeriod] = useState<"7d" | "30d">("7d");
   const [weightPeriod, setWeightPeriod] = useState<"7d" | "30d" | "90d">("30d");
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     checkAuthAndLoadData();
@@ -61,7 +63,7 @@ export default function Dashboard() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        window.location.href = '/auth';
+        navigate('/auth');
         return;
       }
       
@@ -90,7 +92,7 @@ export default function Dashboard() {
       await loadDashboardData(user.id);
     } catch (error) {
       console.error('Erro na verificação de autenticação:', error);
-      window.location.href = '/auth';
+      navigate('/auth');
     }
   };
 
@@ -255,7 +257,7 @@ export default function Dashboard() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    window.location.href = '/';
+    navigate('/');
   };
 
   const getRoleBadgeVariant = (tipoUsuario: string | null) => {
@@ -354,13 +356,13 @@ export default function Dashboard() {
           )}
           <div className="flex flex-col sm:flex-row gap-2 mt-4">
             {(userProfile?.tipo_usuario === 'gestor' || userProfile?.tipo_usuario === 'socio') && (
-              <Button onClick={() => window.location.href = '/users'} variant="outline" size="sm">
+              <Button onClick={() => navigate('/users')} variant="outline" size="sm">
                 <Shield className="h-4 w-4 mr-2" />
                 Gerenciar Usuários
               </Button>
             )}
             {(userProfile?.tipo_usuario === 'cliente' || userProfile?.tipo_usuario === 'dependente') && (
-              <Button onClick={() => window.location.href = '/users'} variant="outline" size="sm">
+              <Button onClick={() => navigate('/users')} variant="outline" size="sm">
                 <UserIcon className="h-4 w-4 mr-2" />
                 Meu Perfil
               </Button>
@@ -381,7 +383,7 @@ export default function Dashboard() {
               Para editar seus dados pessoais, acesse <Button 
                 variant="link" 
                 className="p-0 h-auto text-blue-600 dark:text-blue-400 underline"
-                onClick={() => window.location.href = '/users'}
+                onClick={() => navigate('/users')}
               >
                 Gerenciamento de Usuários
               </Button>. Não é possível criar dependentes.
