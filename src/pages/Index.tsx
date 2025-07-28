@@ -6,7 +6,6 @@ import { Shield, LogOut, Users, Info, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
-import ethraBg from '@/assets/ethra-bg.jpg';
 
 const Index = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -20,47 +19,73 @@ const Index = () => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Load user profile
-          const { data: profile } = await supabase
-            .from('usuarios')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
+        try {
+          setSession(session);
+          setUser(session?.user ?? null);
           
-          setUserProfile(profile);
-        } else {
-          setUserProfile(null);
+          if (session?.user) {
+            // Load user profile
+            const { data: profile, error } = await supabase
+              .from('usuarios')
+              .select('*')
+              .eq('id', session.user.id)
+              .maybeSingle();
+            
+            if (error) {
+              console.error('Error fetching user profile:', error);
+              toast({
+                title: "Erro ao carregar perfil",
+                description: "Não foi possível carregar seus dados. Tente novamente.",
+                variant: "destructive",
+              });
+            }
+            
+            setUserProfile(profile);
+          } else {
+            setUserProfile(null);
+          }
+        } catch (error) {
+          console.error('Auth state change error:', error);
+        } finally {
+          setIsLoading(false);
         }
-        
-        setIsLoading(false);
       }
     );
 
     // THEN check for existing session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        // Load user profile
-        const { data: profile } = await supabase
-          .from('usuarios')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
+      try {
+        setSession(session);
+        setUser(session?.user ?? null);
         
-        setUserProfile(profile);
+        if (session?.user) {
+          // Load user profile
+          const { data: profile, error } = await supabase
+            .from('usuarios')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle();
+          
+          if (error) {
+            console.error('Error fetching user profile:', error);
+            toast({
+              title: "Erro ao carregar perfil",
+              description: "Não foi possível carregar seus dados. Tente novamente.",
+              variant: "destructive",
+            });
+          }
+          
+          setUserProfile(profile);
+        }
+      } catch (error) {
+        console.error('Session check error:', error);
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [toast]);
 
   const handleSignOut = async () => {
     try {
@@ -99,17 +124,9 @@ const Index = () => {
 
   if (!user) {
     return (
-      <div 
-        className="min-h-screen flex items-center justify-center relative overflow-hidden"
-        style={{
-          backgroundImage: `url(${ethraBg})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
-      >
+      <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-background via-muted/20 to-ethra/10">
         {/* Overlay */}
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-background/40 backdrop-blur-sm" />
         
         {/* Content */}
         <div className="relative z-10 text-center space-y-8">
@@ -135,17 +152,9 @@ const Index = () => {
   }
 
   return (
-    <div 
-      className="min-h-screen relative overflow-hidden"
-      style={{
-        backgroundImage: `url(${ethraBg})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
-    >
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-background via-muted/20 to-ethra/10">
       {/* Overlay */}
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-background/40 backdrop-blur-sm" />
       
       {/* Header */}
       <header className="relative z-10 border-b border-glass bg-glass backdrop-blur-lg">
