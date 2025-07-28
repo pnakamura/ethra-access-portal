@@ -2,14 +2,16 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Shield, LogOut, Users } from 'lucide-react';
+import { Shield, LogOut, Users, Info, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { User, Session } from '@supabase/supabase-js';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import ethraBg from '@/assets/ethra-bg.jpg';
 
 const Index = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -17,17 +19,43 @@ const Index = () => {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          // Load user profile
+          const { data: profile } = await supabase
+            .from('usuarios')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          setUserProfile(profile);
+        } else {
+          setUserProfile(null);
+        }
+        
         setIsLoading(false);
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        // Load user profile
+        const { data: profile } = await supabase
+          .from('usuarios')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        setUserProfile(profile);
+      }
+      
       setIsLoading(false);
     });
 
@@ -154,6 +182,19 @@ const Index = () => {
           <p className="text-lg md:text-xl text-muted-foreground">
             Bem-vindo ao sistema de administração Ethra
           </p>
+          
+          {/* Information Alert for Cliente/Dependente Users */}
+          {userProfile && (userProfile.tipo_usuario === 'cliente' || userProfile.tipo_usuario === 'dependente') && (
+            <Alert className="mb-8 border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950 max-w-4xl mx-auto">
+              <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <AlertDescription className="text-blue-800 dark:text-blue-200">
+                <strong>Acesso Limitado:</strong> Como {userProfile.tipo_usuario}, você tem acesso apenas ao seu próprio perfil 
+                e não pode criar dependentes. Utilize "Dashboard Nutricional" para acompanhar seus dados e "Gerenciar Usuários" 
+                para editar seu perfil pessoal.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             <div className="group">
               <Button 
@@ -179,13 +220,23 @@ const Index = () => {
                 className="w-full p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg hover:bg-glass/80 h-auto min-h-[160px] flex flex-col items-center justify-center space-y-4 text-center"
                 variant="ghost"
               >
-                <Users className="h-8 w-8 text-ethra flex-shrink-0" />
+                {userProfile?.tipo_usuario === 'cliente' || userProfile?.tipo_usuario === 'dependente' ? (
+                  <User className="h-8 w-8 text-ethra flex-shrink-0" />
+                ) : (
+                  <Users className="h-8 w-8 text-ethra flex-shrink-0" />
+                )}
                 <div className="space-y-2 flex-1 flex flex-col justify-center">
                   <h3 className="text-base font-semibold text-foreground leading-tight">
-                    Gerenciar Usuários
+                    {userProfile?.tipo_usuario === 'cliente' || userProfile?.tipo_usuario === 'dependente' 
+                      ? 'Meu Perfil' 
+                      : 'Gerenciar Usuários'
+                    }
                   </h3>
                   <p className="text-muted-foreground text-xs leading-relaxed px-2">
-                    Visualizar, editar e deletar usuários do sistema
+                    {userProfile?.tipo_usuario === 'cliente' || userProfile?.tipo_usuario === 'dependente'
+                      ? 'Visualizar e editar seus dados pessoais'
+                      : 'Visualizar, editar e deletar usuários do sistema'
+                    }
                   </p>
                 </div>
               </Button>
@@ -194,16 +245,29 @@ const Index = () => {
             <div className="group">
               <Button 
                 onClick={() => navigate('/create-dependent')}
-                className="w-full p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg hover:bg-glass/80 h-auto min-h-[160px] flex flex-col items-center justify-center space-y-4 text-center"
+                className={`w-full p-6 rounded-lg bg-glass border border-glass backdrop-blur-lg h-auto min-h-[160px] flex flex-col items-center justify-center space-y-4 text-center ${
+                  userProfile?.tipo_usuario === 'cliente' || userProfile?.tipo_usuario === 'dependente'
+                    ? 'opacity-50 cursor-not-allowed hover:bg-glass' 
+                    : 'hover:bg-glass/80'
+                }`}
                 variant="ghost"
+                disabled={userProfile?.tipo_usuario === 'cliente' || userProfile?.tipo_usuario === 'dependente'}
               >
                 <Users className="h-8 w-8 text-ethra flex-shrink-0" />
                 <div className="space-y-2 flex-1 flex flex-col justify-center">
                   <h3 className="text-base font-semibold text-foreground leading-tight">
                     Criar Dependente
+                    {(userProfile?.tipo_usuario === 'cliente' || userProfile?.tipo_usuario === 'dependente') && (
+                      <span className="block text-xs text-red-500 font-normal mt-1">
+                        (Não disponível)
+                      </span>
+                    )}
                   </h3>
                   <p className="text-muted-foreground text-xs leading-relaxed px-2">
-                    Criar novos usuários dependentes vinculados à sua conta
+                    {userProfile?.tipo_usuario === 'cliente' || userProfile?.tipo_usuario === 'dependente'
+                      ? 'Funcionalidade restrita ao seu tipo de usuário'
+                      : 'Criar novos usuários dependentes vinculados à sua conta'
+                    }
                   </p>
                 </div>
               </Button>
