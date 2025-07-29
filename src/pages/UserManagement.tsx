@@ -133,25 +133,65 @@ export default function UserManagement() {
 
   const loadUsuarios = async () => {
     try {
-      const { data: usuarios, error: usuariosError } = await supabase
-        .from('usuarios')
-        .select(`
-          *,
-          planos:plano_id (
-            nome_plano
-          )
-        `)
-        .order('atualizado_em', { ascending: false });
+      if (userProfile?.tipo_usuario === 'socio') {
+        // Sócios podem ver todos os usuários
+        const { data: usuarios, error: usuariosError } = await supabase
+          .from('usuarios')
+          .select(`
+            *,
+            planos:plano_id (
+              nome_plano
+            )
+          `)
+          .order('atualizado_em', { ascending: false });
 
-      if (usuariosError) throw usuariosError;
-      
-      // Map the joined data to include nome_plano
-      const usuariosWithPlanos = usuarios?.map(usuario => ({
-        ...usuario,
-        nome_plano: usuario.planos?.nome_plano || null
-      })) || [];
-      
-      setUsuarios(usuariosWithPlanos);
+        if (usuariosError) throw usuariosError;
+        
+        // Map the joined data to include nome_plano
+        const usuariosWithPlanos = usuarios?.map(usuario => ({
+          ...usuario,
+          nome_plano: usuario.planos?.nome_plano || null
+        })) || [];
+        
+        setUsuarios(usuariosWithPlanos);
+      } else if (userProfile?.tipo_usuario === 'gestor') {
+        // Gestores podem ver apenas usuários vinculados a eles
+        const { data: userIds, error: vinculosError } = await supabase
+          .from('vinculos_usuarios')
+          .select('usuario_id')
+          .eq('usuario_principal_id', userProfile.id)
+          .eq('ativo', true);
+        
+        if (!vinculosError && userIds && userIds.length > 0) {
+          const ids = userIds.map(v => v.usuario_id);
+          const { data: usuarios, error: usuariosError } = await supabase
+            .from('usuarios')
+            .select(`
+              *,
+              planos:plano_id (
+                nome_plano
+              )
+            `)
+            .in('id', ids)
+            .order('atualizado_em', { ascending: false });
+          
+          if (usuariosError) throw usuariosError;
+          
+          // Map the joined data to include nome_plano and add current user
+          const usuariosWithPlanos = usuarios?.map(usuario => ({
+            ...usuario,
+            nome_plano: usuario.planos?.nome_plano || null
+          })) || [];
+          
+          setUsuarios([userProfile, ...usuariosWithPlanos]);
+        } else {
+          // No linked users, only show themselves
+          setUsuarios([userProfile]);
+        }
+      } else {
+        // Other user types only see themselves
+        setUsuarios([userProfile]);
+      }
     } catch (error) {
       console.error('Erro ao carregar usuários:', error);
       toast({

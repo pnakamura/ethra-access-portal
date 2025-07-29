@@ -41,15 +41,27 @@ export function UserSelector({ currentUser, selectedUserId, onUserChange }: User
           setUsers(data);
         }
       } else if (currentUser.tipo_usuario === 'gestor') {
-        // Gestores can see only dependents and clients
-        const { data, error } = await supabase
-          .from('usuarios')
-          .select('id, nome_completo, email, tipo_usuario')
-          .in('tipo_usuario', ['cliente', 'dependente'])
-          .order('nome_completo');
+        // Gestores can see only users linked to them in vinculos_usuarios
+        const { data: userIds, error: vinculosError } = await supabase
+          .from('vinculos_usuarios')
+          .select('usuario_id')
+          .eq('usuario_principal_id', currentUser.id)
+          .eq('ativo', true);
         
-        if (!error && data) {
-          setUsers([currentUser, ...data]);
+        if (!vinculosError && userIds && userIds.length > 0) {
+          const ids = userIds.map(v => v.usuario_id);
+          const { data: linkedUsers, error: usersError } = await supabase
+            .from('usuarios')
+            .select('id, nome_completo, email, tipo_usuario')
+            .in('id', ids);
+          
+          if (!usersError && linkedUsers) {
+            setUsers([currentUser, ...linkedUsers]);
+          } else {
+            setUsers([currentUser]);
+          }
+        } else {
+          setUsers([currentUser]);
         }
       } else {
         // Regular users only see themselves
