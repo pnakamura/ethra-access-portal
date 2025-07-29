@@ -61,7 +61,7 @@ export function UserTable({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {usuarios.map((usuario) => (
+                  {usuarios.filter(usuario => usuario !== null).map((usuario) => (
                     <TableRow key={usuario.id}>
                       <TableCell className="font-medium">
                         {usuario.nome_completo || 'Não informado'}
@@ -109,7 +109,7 @@ export function UserTable({
 
             {/* Mobile Cards */}
             <div className="md:hidden space-y-4">
-              {usuarios.map((usuario) => (
+              {usuarios.filter(usuario => usuario !== null).map((usuario) => (
                 <Card key={usuario.id} className="border border-border/50">
                   <CardContent className="p-4">
                     <div className="flex flex-col space-y-3">
