@@ -69,8 +69,11 @@ export default function UserManagement() {
 
   const checkAuthAndLoadData = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      setLoading(true);
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        console.log('No authenticated user, redirecting to auth');
         navigate('/auth');
         return;
       }
@@ -95,6 +98,7 @@ export default function UserManagement() {
         return;
       }
 
+      console.log('User profile loaded:', profile);
       setUserProfile(profile);
       
       // Check if user is admin or socio - correct hierarchy: socio > gestor  
@@ -117,23 +121,25 @@ export default function UserManagement() {
         return;
       }
 
-      // Only load all users data if user has admin privileges
+      // Load data based on user role - now passing profile to avoid timing issues
       if (userIsAdmin || userIsSocio) {
-        await Promise.all([loadUsuarios(), loadPlanos()]);
+        await Promise.all([loadUsuarios(profile), loadPlanos()]);
       } else {
         // For cliente/dependente, only load plans for their own profile editing
         await loadPlanos();
-        setLoading(false);
       }
     } catch (error) {
       console.error('Erro na verificação de autenticação:', error);
       navigate('/auth');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const loadUsuarios = async () => {
+  const loadUsuarios = async (profile?: Usuario) => {
     try {
-      if (userProfile?.tipo_usuario === 'socio') {
+      const currentProfile = profile || userProfile;
+      if (currentProfile?.tipo_usuario === 'socio') {
         // Sócios podem ver todos os usuários
         const { data: usuarios, error: usuariosError } = await supabase
           .from('usuarios')
@@ -154,12 +160,12 @@ export default function UserManagement() {
         })) || [];
         
         setUsuarios(usuariosWithPlanos);
-      } else if (userProfile?.tipo_usuario === 'gestor') {
+      } else if (currentProfile?.tipo_usuario === 'gestor') {
         // Gestores podem ver apenas usuários vinculados a eles
         const { data: userIds, error: vinculosError } = await supabase
           .from('vinculos_usuarios')
           .select('usuario_id')
-          .eq('usuario_principal_id', userProfile.id)
+          .eq('usuario_principal_id', currentProfile.id)
           .eq('ativo', true);
         
         if (!vinculosError && userIds && userIds.length > 0) {
@@ -183,14 +189,14 @@ export default function UserManagement() {
             nome_plano: usuario.planos?.nome_plano || null
           })) || [];
           
-          setUsuarios([userProfile, ...usuariosWithPlanos]);
+          setUsuarios([currentProfile, ...usuariosWithPlanos]);
         } else {
           // No linked users, only show themselves
-          setUsuarios([userProfile]);
+          setUsuarios([currentProfile]);
         }
       } else {
         // Other user types only see themselves
-        setUsuarios([userProfile]);
+        setUsuarios([currentProfile]);
       }
     } catch (error) {
       console.error('Erro ao carregar usuários:', error);
