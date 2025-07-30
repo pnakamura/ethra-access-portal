@@ -589,7 +589,7 @@ export default function UserManagement() {
         {/* Admin view - show stats, filters and user table */}
         {!isProfileMode && (
           <>
-            <UserStats />
+            <UserStats userProfile={userProfile} />
 
             <UserFilters
               searchTerm={searchTerm}

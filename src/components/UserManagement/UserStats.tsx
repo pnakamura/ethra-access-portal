@@ -12,17 +12,30 @@ interface UserStatsData {
   usuarios_ativos_30_dias: number;
 }
 
-export function UserStats() {
+interface Usuario {
+  id: string;
+  nome_completo: string;
+  email: string;
+  tipo_usuario: 'socio' | 'gestor' | 'cliente' | 'dependente';
+}
+
+interface UserStatsProps {
+  userProfile?: Usuario;
+}
+
+export function UserStats({ userProfile }: UserStatsProps) {
   const [stats, setStats] = useState<UserStatsData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadStats();
-  }, []);
+    if (userProfile) {
+      loadStats();
+    }
+  }, [userProfile]);
 
   const loadStats = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_user_stats');
+      const { data, error } = await supabase.rpc('get_user_stats_by_role');
       if (error) throw error;
       
       if (data && data.length > 0) {
@@ -52,50 +65,85 @@ export function UserStats() {
     );
   }
 
-  if (!stats) return null;
+  if (!stats || !userProfile) return null;
 
-  const statCards = [
-    {
-      title: "Total de Usuários",
-      value: stats.total_usuarios,
-      icon: Users,
-      color: "text-primary"
-    },
-    {
-      title: "Clientes",
-      value: stats.total_clientes,
-      icon: UserCheck,
-      color: "text-blue-500"
-    },
-    {
-      title: "Sócios",
-      value: stats.total_socios,
-      icon: Crown,
-      color: "text-yellow-500"
-    },
-    {
-      title: "Gestores",
-      value: stats.total_gestores,
-      icon: Shield,
-      color: "text-red-500"
-    },
-    {
-      title: "Dependentes",
-      value: stats.total_dependentes,
-      icon: UserPlus,
-      color: "text-green-500"
-    },
-    {
-      title: "Ativos (30d)",
-      value: stats.usuarios_ativos_30_dias,
-      icon: Users,
-      color: "text-purple-500"
+  // Define which cards to show based on user type
+  const getVisibleCards = () => {
+    const allCards = [
+      {
+        title: "Total de Usuários",
+        value: stats.total_usuarios,
+        icon: Users,
+        color: "text-primary",
+        key: "total"
+      },
+      {
+        title: "Clientes",
+        value: stats.total_clientes,
+        icon: UserCheck,
+        color: "text-blue-500",
+        key: "clientes"
+      },
+      {
+        title: "Sócios",
+        value: stats.total_socios,
+        icon: Crown,
+        color: "text-yellow-500",
+        key: "socios"
+      },
+      {
+        title: "Gestores",
+        value: stats.total_gestores,
+        icon: Shield,
+        color: "text-red-500",
+        key: "gestores"
+      },
+      {
+        title: "Dependentes",
+        value: stats.total_dependentes,
+        icon: UserPlus,
+        color: "text-green-500",
+        key: "dependentes"
+      },
+      {
+        title: "Ativos (30d)",
+        value: stats.usuarios_ativos_30_dias,
+        icon: Users,
+        color: "text-purple-500",
+        key: "ativos"
+      }
+    ];
+
+    switch (userProfile.tipo_usuario) {
+      case 'socio':
+        // Socios see all cards
+        return allCards;
+      
+      case 'gestor':
+        // Gestores only see total users, dependentes, and active users
+        return allCards.filter(card => 
+          ['total', 'dependentes', 'ativos'].includes(card.key)
+        );
+      
+      case 'cliente':
+      case 'dependente':
+        // Clientes and dependentes see minimal stats
+        return allCards.filter(card => 
+          ['total', 'ativos'].includes(card.key)
+        );
+      
+      default:
+        return [];
     }
-  ];
+  };
+
+  const visibleCards = getVisibleCards();
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-      {statCards.map((stat, index) => {
+    <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 ${
+      visibleCards.length <= 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-6'
+    }`}>
+      {visibleCards.map((stat, index) => {
         const IconComponent = stat.icon;
         return (
           <Card key={index} className="bg-card-dark border-primary/20">

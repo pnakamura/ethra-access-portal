@@ -943,6 +943,17 @@ export type Database = {
           usuarios_ativos_30_dias: number
         }[]
       }
+      get_user_stats_by_role: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          total_usuarios: number
+          total_clientes: number
+          total_socios: number
+          total_gestores: number
+          total_dependentes: number
+          usuarios_ativos_30_dias: number
+        }[]
+      }
       has_higher_or_equal_privilege: {
         Args: { target_user_id: string }
         Returns: boolean
