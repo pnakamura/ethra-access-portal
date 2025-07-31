@@ -142,29 +142,43 @@ export default function UserManagement() {
     try {
       const currentProfile = profile || userProfile;
       if (currentProfile?.tipo_usuario === 'socio') {
-        // Sócios podem ver todos os usuários com informações do responsável
+        // Sócios podem ver todos os usuários - usando consultas separadas para evitar problemas com JOIN complexo
         const { data: usuarios, error: usuariosError } = await supabase
           .from('usuarios')
           .select(`
             *,
             planos:plano_id (
               nome_plano
-            ),
-            vinculos_usuarios!usuario_id (
-              usuario_principal_id,
-              responsavel:usuarios!usuario_principal_id (
-                nome_completo,
-                tipo_usuario
-              )
             )
           `)
           .order('atualizado_em', { ascending: false });
 
         if (usuariosError) throw usuariosError;
+
+        // Get vinculos separately 
+        const { data: vinculos, error: vinculosError } = await supabase
+          .from('vinculos_usuarios')
+          .select(`
+            usuario_id,
+            usuario_principal_id,
+            responsavel:usuarios!usuario_principal_id (
+              nome_completo,
+              tipo_usuario
+            )
+          `)
+          .eq('ativo', true);
+
+        if (vinculosError) throw vinculosError;
+
+        // Create a map for faster lookup
+        const vinculosMap = new Map();
+        vinculos?.forEach(vinculo => {
+          vinculosMap.set(vinculo.usuario_id, vinculo);
+        });
         
-        // Map the joined data to include nome_plano and responsavel info
+        // Map the data to include nome_plano and responsavel info
         const usuariosWithPlanos = usuarios?.map(usuario => {
-          const vinculo = usuario.vinculos_usuarios?.[0];
+          const vinculo = vinculosMap.get(usuario.id);
           return {
             ...usuario,
             nome_plano: usuario.planos?.nome_plano || null,
