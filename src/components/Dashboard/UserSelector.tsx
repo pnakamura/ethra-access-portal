@@ -9,6 +9,8 @@ interface Usuario {
   nome_completo: string | null;
   email: string | null;
   tipo_usuario: 'cliente' | 'socio' | 'gestor' | 'dependente' | null;
+  responsavel_nome?: string | null;
+  responsavel_tipo?: 'gestor' | 'socio' | null;
 }
 
 interface UserSelectorProps {
@@ -31,14 +33,30 @@ export function UserSelector({ currentUser, selectedUserId, onUserChange }: User
       
       // Hierarchy: socio > gestor > cliente/dependente
       if (currentUser.tipo_usuario === 'socio') {
-        // Sócios can see all users
+        // Sócios can see all users with responsible info
         const { data, error } = await supabase
           .from('usuarios')
-          .select('id, nome_completo, email, tipo_usuario')
+          .select(`
+            id, nome_completo, email, tipo_usuario,
+            vinculos_usuarios!usuario_id (
+              responsavel:usuarios!usuario_principal_id (
+                nome_completo,
+                tipo_usuario
+              )
+            )
+          `)
           .order('nome_completo');
         
         if (!error && data) {
-          setUsers(data);
+          const usersWithResponsavel = data.map(user => {
+            const vinculo = user.vinculos_usuarios?.[0];
+            return {
+              ...user,
+              responsavel_nome: vinculo?.responsavel?.nome_completo || null,
+              responsavel_tipo: vinculo?.responsavel?.tipo_usuario || null
+            };
+          });
+          setUsers(usersWithResponsavel);
         }
       } else if (currentUser.tipo_usuario === 'gestor') {
         // Gestores can see only users linked to them in vinculos_usuarios
@@ -56,7 +74,12 @@ export function UserSelector({ currentUser, selectedUserId, onUserChange }: User
             .in('id', ids);
           
           if (!usersError && linkedUsers) {
-            setUsers([currentUser, ...linkedUsers]);
+            const usersWithResponsavel = linkedUsers.map(user => ({
+              ...user,
+              responsavel_nome: currentUser.nome_completo,
+              responsavel_tipo: currentUser.tipo_usuario as 'gestor'
+            }));
+            setUsers([currentUser, ...usersWithResponsavel]);
           } else {
             setUsers([currentUser]);
           }
@@ -106,7 +129,14 @@ export function UserSelector({ currentUser, selectedUserId, onUserChange }: User
             {users.map((user) => (
               <SelectItem key={user.id} value={user.id}>
                 <div className="flex items-center gap-2">
-                  <span>{user.nome_completo || user.email}</span>
+                  <div className="flex flex-col">
+                    <span>{user.nome_completo || user.email}</span>
+                    {user.tipo_usuario === 'dependente' && user.responsavel_nome && (
+                      <span className="text-xs text-muted-foreground">
+                        Responsável: {user.responsavel_nome}
+                      </span>
+                    )}
+                  </div>
                   <Badge variant={getRoleBadgeVariant(user.tipo_usuario)} className="text-xs">
                     {getRoleDisplayName(user.tipo_usuario)}
                   </Badge>

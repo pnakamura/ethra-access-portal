@@ -13,6 +13,8 @@ interface Usuario {
   tipo_usuario: 'cliente' | 'socio' | 'gestor' | 'dependente' | null;
   atualizado_em: string | null;
   nome_plano?: string | null;
+  responsavel_nome?: string | null;
+  responsavel_tipo?: 'gestor' | 'socio' | null;
 }
 
 interface UserTableProps {
@@ -55,6 +57,7 @@ export function UserTable({
                     <TableHead>Nome Completo</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Função</TableHead>
+                    <TableHead>Responsável</TableHead>
                     <TableHead>Plano</TableHead>
                     <TableHead>Última Atualização</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
@@ -71,6 +74,17 @@ export function UserTable({
                         <Badge variant={getRoleBadgeVariant(usuario.tipo_usuario) as any}>
                           {getRoleDisplayName(usuario.tipo_usuario)}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {usuario.tipo_usuario === 'dependente' && usuario.responsavel_nome ? (
+                          <div className="flex items-center gap-1">
+                            <Badge variant={usuario.responsavel_tipo === 'socio' ? 'secondary' : 'destructive'} className="text-xs">
+                              {usuario.responsavel_nome}
+                            </Badge>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {usuario.nome_plano ? (
@@ -126,6 +140,15 @@ export function UserTable({
                           {getRoleDisplayName(usuario.tipo_usuario)}
                         </Badge>
                       </div>
+                      
+                      {usuario.tipo_usuario === 'dependente' && usuario.responsavel_nome && (
+                        <div className="text-sm">
+                          <span className="text-muted-foreground">Responsável: </span>
+                          <Badge variant={usuario.responsavel_tipo === 'socio' ? 'secondary' : 'destructive'} className="text-xs">
+                            {usuario.responsavel_nome}
+                          </Badge>
+                        </div>
+                      )}
                       
                       <div className="text-sm">
                         <span className="text-muted-foreground">Plano: </span>

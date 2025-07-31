@@ -31,6 +31,8 @@ interface Usuario {
   whatsapp_id?: string | null;
   admin_responsavel_id?: string | null;
   nome_plano?: string | null;
+  responsavel_nome?: string | null;
+  responsavel_tipo?: 'gestor' | 'socio' | null;
 }
 
 interface Plano {
@@ -140,24 +142,36 @@ export default function UserManagement() {
     try {
       const currentProfile = profile || userProfile;
       if (currentProfile?.tipo_usuario === 'socio') {
-        // Sócios podem ver todos os usuários
+        // Sócios podem ver todos os usuários com informações do responsável
         const { data: usuarios, error: usuariosError } = await supabase
           .from('usuarios')
           .select(`
             *,
             planos:plano_id (
               nome_plano
+            ),
+            vinculos_usuarios!usuario_id (
+              usuario_principal_id,
+              responsavel:usuarios!usuario_principal_id (
+                nome_completo,
+                tipo_usuario
+              )
             )
           `)
           .order('atualizado_em', { ascending: false });
 
         if (usuariosError) throw usuariosError;
         
-        // Map the joined data to include nome_plano
-        const usuariosWithPlanos = usuarios?.map(usuario => ({
-          ...usuario,
-          nome_plano: usuario.planos?.nome_plano || null
-        })) || [];
+        // Map the joined data to include nome_plano and responsavel info
+        const usuariosWithPlanos = usuarios?.map(usuario => {
+          const vinculo = usuario.vinculos_usuarios?.[0];
+          return {
+            ...usuario,
+            nome_plano: usuario.planos?.nome_plano || null,
+            responsavel_nome: vinculo?.responsavel?.nome_completo || null,
+            responsavel_tipo: vinculo?.responsavel?.tipo_usuario || null
+          };
+        }) || [];
         
         setUsuarios(usuariosWithPlanos);
       } else if (currentProfile?.tipo_usuario === 'gestor') {
@@ -186,7 +200,9 @@ export default function UserManagement() {
           // Map the joined data to include nome_plano and add current user
           const usuariosWithPlanos = usuarios?.map(usuario => ({
             ...usuario,
-            nome_plano: usuario.planos?.nome_plano || null
+            nome_plano: usuario.planos?.nome_plano || null,
+            responsavel_nome: currentProfile.nome_completo,
+            responsavel_tipo: currentProfile.tipo_usuario as 'gestor'
           })) || [];
           
           setUsuarios([currentProfile, ...usuariosWithPlanos]);
