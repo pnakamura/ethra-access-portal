@@ -1,10 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import { Progress } from "@/components/ui/progress";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Download, TrendingUp, TrendingDown, Activity, Droplets, Target } from "lucide-react";
+import { Download, TrendingUp, TrendingDown, Activity, Droplets, Target, Flame, Scale, Heart, Calendar } from "lucide-react";
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -81,8 +81,35 @@ export function ReportView({ report, onExport }: ReportViewProps) {
     { name: 'Gorduras', value: averageNutrition.gorduras || 0, color: 'hsl(var(--ethra-accent))' },
   ];
 
+  // Enhanced nutrition data with multiple metrics
+  const enhancedNutritionData = nutritionData.map((day, index) => ({
+    ...day,
+    dia: `Dia ${index + 1}`,
+    data_formatada: formatDate(day.data),
+    meta_calorias: 2000, // Could be dynamic based on user goals
+    eficiencia: ((day.calorias || 0) / 2000) * 100,
+  }));
+
+  // Radar chart data for nutritional balance
+  const radarData = [
+    { metric: 'Calorias', atual: Math.min((averageNutrition.calorias || 0) / 25, 100), meta: 80 },
+    { metric: 'Proteínas', atual: Math.min((averageNutrition.proteinas || 0) / 2, 100), meta: 75 },
+    { metric: 'Carboidratos', atual: Math.min((averageNutrition.carboidratos || 0) / 3, 100), meta: 70 },
+    { metric: 'Gorduras', atual: Math.min((averageNutrition.gorduras || 0) / 1, 100), meta: 65 },
+    { metric: 'Hidratação', atual: 85, meta: 90 }, // Mock data
+    { metric: 'Exercícios', atual: 70, meta: 80 }, // Mock data
+  ];
+
   // Comparison data
   const comparison = report.comparacao_semanal || {};
+
+  // Weekly trend data
+  const weeklyTrend = enhancedNutritionData.map((day, index) => ({
+    dia: day.dia,
+    calorias: day.calorias || 0,
+    proteinas: day.proteinas || 0,
+    peso_estimado: 70 - (index * 0.1), // Mock weight progression
+  }));
 
   return (
     <div className="space-y-6">
@@ -100,9 +127,9 @@ export function ReportView({ report, onExport }: ReportViewProps) {
               <Badge variant={getStatusVariant(report.status_envio)}>
                 {getStatusText(report.status_envio)}
               </Badge>
-              <Button onClick={onExport} className="bg-ethra hover:bg-ethra/90">
+              <Button onClick={onExport} variant="outline" className="border-ethra text-ethra hover:bg-ethra hover:text-white">
                 <Download className="h-4 w-4 mr-2" />
-                Exportar PDF
+                Exportar Relatório
               </Button>
             </div>
           </div>
@@ -130,119 +157,231 @@ export function ReportView({ report, onExport }: ReportViewProps) {
         </Card>
       )}
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Activity className="h-4 w-4 text-ethra" />
-              <span className="text-sm font-medium">Calorias Média</span>
+      {/* Enhanced Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="bg-gradient-to-br from-ethra/10 to-ethra/5 border-ethra/20">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-ethra/20 rounded-lg">
+                  <Flame className="h-5 w-5 text-ethra" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Calorias Diárias</p>
+                  <p className="text-2xl font-bold text-ethra">
+                    {Math.round(averageNutrition.calorias || 0)}
+                  </p>
+                </div>
+              </div>
             </div>
-            <p className="text-2xl font-bold mt-2">
-              {Math.round(averageNutrition.calorias || 0)}
-            </p>
-            <p className="text-xs text-muted-foreground">kcal/dia</p>
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span>Meta: 2000 kcal</span>
+                <span>{Math.round(((averageNutrition.calorias || 0) / 2000) * 100)}%</span>
+              </div>
+              <Progress value={Math.min(((averageNutrition.calorias || 0) / 2000) * 100, 100)} className="h-2" />
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Target className="h-4 w-4 text-ethra-secondary" />
-              <span className="text-sm font-medium">Proteínas Média</span>
+        <Card className="bg-gradient-to-br from-ethra-secondary/10 to-ethra-secondary/5 border-ethra-secondary/20">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-ethra-secondary/20 rounded-lg">
+                  <Target className="h-5 w-5 text-ethra-secondary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Proteínas Diárias</p>
+                  <p className="text-2xl font-bold text-ethra-secondary">
+                    {Math.round(averageNutrition.proteinas || 0)}g
+                  </p>
+                </div>
+              </div>
             </div>
-            <p className="text-2xl font-bold mt-2">
-              {Math.round(averageNutrition.proteinas || 0)}g
-            </p>
-            <p className="text-xs text-muted-foreground">por dia</p>
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span>Meta: 150g</span>
+                <span>{Math.round(((averageNutrition.proteinas || 0) / 150) * 100)}%</span>
+              </div>
+              <Progress value={Math.min(((averageNutrition.proteinas || 0) / 150) * 100, 100)} className="h-2" />
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Droplets className="h-4 w-4 text-ethra-accent" />
-              <span className="text-sm font-medium">Carboidratos Média</span>
+        <Card className="bg-gradient-to-br from-ethra-accent/10 to-ethra-accent/5 border-ethra-accent/20">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-ethra-accent/20 rounded-lg">
+                  <Activity className="h-5 w-5 text-ethra-accent" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Carboidratos</p>
+                  <p className="text-2xl font-bold text-ethra-accent">
+                    {Math.round(averageNutrition.carboidratos || 0)}g
+                  </p>
+                </div>
+              </div>
             </div>
-            <p className="text-2xl font-bold mt-2">
-              {Math.round(averageNutrition.carboidratos || 0)}g
-            </p>
-            <p className="text-xs text-muted-foreground">por dia</p>
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span>Meta: 250g</span>
+                <span>{Math.round(((averageNutrition.carboidratos || 0) / 250) * 100)}%</span>
+              </div>
+              <Progress value={Math.min(((averageNutrition.carboidratos || 0) / 250) * 100, 100)} className="h-2" />
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Activity className="h-4 w-4 text-ethra-coral" />
-              <span className="text-sm font-medium">Gorduras Média</span>
+        <Card className="bg-gradient-to-br from-ethra-coral/10 to-ethra-coral/5 border-ethra-coral/20">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-ethra-coral/20 rounded-lg">
+                  <Droplets className="h-5 w-5 text-ethra-coral" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Gorduras Diárias</p>
+                  <p className="text-2xl font-bold text-ethra-coral">
+                    {Math.round(averageNutrition.gorduras || 0)}g
+                  </p>
+                </div>
+              </div>
             </div>
-            <p className="text-2xl font-bold mt-2">
-              {Math.round(averageNutrition.gorduras || 0)}g
-            </p>
-            <p className="text-xs text-muted-foreground">por dia</p>
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span>Meta: 67g</span>
+                <span>{Math.round(((averageNutrition.gorduras || 0) / 67) * 100)}%</span>
+              </div>
+              <Progress value={Math.min(((averageNutrition.gorduras || 0) / 67) * 100, 100)} className="h-2" />
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Daily Nutrition Chart */}
-        {nutritionData.length > 0 && (
-          <Card>
+      {/* Enhanced Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Daily Nutrition Trend */}
+        {enhancedNutritionData.length > 0 && (
+          <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Evolução Diária - Calorias</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Evolução Nutricional Semanal
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <ChartContainer
                 config={{
-                  calorias: {
-                    label: "Calorias",
-                    color: "hsl(var(--ethra-primary))",
-                  },
+                  calorias: { label: "Calorias", color: "hsl(var(--ethra-primary))" },
+                  proteinas: { label: "Proteínas", color: "hsl(var(--ethra-secondary))" },
+                  meta_calorias: { label: "Meta", color: "hsl(var(--muted-foreground))" },
                 }}
-                className="h-[300px]"
+                className="h-[350px]"
               >
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={nutritionData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="data" />
+                  <AreaChart data={enhancedNutritionData}>
+                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                    <XAxis dataKey="dia" />
                     <YAxis />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Line 
-                      type="monotone" 
-                      dataKey="calorias" 
-                      stroke="hsl(var(--ethra-primary))" 
+                    <ChartTooltip 
+                      content={<ChartTooltipContent />}
+                      labelFormatter={(value) => `${value}`}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="meta_calorias"
+                      stroke="hsl(var(--muted-foreground))"
+                      fill="hsl(var(--muted-foreground))"
+                      fillOpacity={0.1}
+                      strokeDasharray="5 5"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="calorias"
+                      stroke="hsl(var(--ethra-primary))"
+                      fill="hsl(var(--ethra-primary))"
+                      fillOpacity={0.3}
+                      strokeWidth={3}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="proteinas"
+                      stroke="hsl(var(--ethra-secondary))"
+                      fill="hsl(var(--ethra-secondary))"
+                      fillOpacity={0.2}
                       strokeWidth={2}
                     />
-                  </LineChart>
+                  </AreaChart>
                 </ResponsiveContainer>
               </ChartContainer>
             </CardContent>
           </Card>
         )}
 
+        {/* Nutritional Balance Radar */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              Equilíbrio Nutricional
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer
+              config={{
+                atual: { label: "Atual", color: "hsl(var(--ethra-primary))" },
+                meta: { label: "Meta", color: "hsl(var(--ethra-secondary))" },
+              }}
+              className="h-[300px]"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart data={radarData}>
+                  <PolarGrid />
+                  <PolarAngleAxis dataKey="metric" className="text-xs" />
+                  <PolarRadiusAxis angle={90} domain={[0, 100]} className="text-xs" />
+                  <Radar
+                    name="Meta"
+                    dataKey="meta"
+                    stroke="hsl(var(--ethra-secondary))"
+                    fill="hsl(var(--ethra-secondary))"
+                    fillOpacity={0.1}
+                    strokeWidth={2}
+                  />
+                  <Radar
+                    name="Atual"
+                    dataKey="atual"
+                    stroke="hsl(var(--ethra-primary))"
+                    fill="hsl(var(--ethra-primary))"
+                    fillOpacity={0.3}
+                    strokeWidth={2}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Secondary Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Macronutrients Distribution */}
         {macroData.some(item => item.value > 0) && (
           <Card>
             <CardHeader>
-              <CardTitle>Distribuição de Macronutrientes</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Scale className="h-5 w-5" />
+                Distribuição de Macronutrientes
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <ChartContainer
                 config={{
-                  proteinas: {
-                    label: "Proteínas",
-                    color: "hsl(var(--ethra-primary))",
-                  },
-                  carboidratos: {
-                    label: "Carboidratos", 
-                    color: "hsl(var(--ethra-secondary))",
-                  },
-                  gorduras: {
-                    label: "Gorduras",
-                    color: "hsl(var(--ethra-accent))",
-                  },
+                  proteinas: { label: "Proteínas", color: "hsl(var(--ethra-primary))" },
+                  carboidratos: { label: "Carboidratos", color: "hsl(var(--ethra-secondary))" },
+                  gorduras: { label: "Gorduras", color: "hsl(var(--ethra-accent))" },
                 }}
                 className="h-[300px]"
               >
@@ -253,8 +392,8 @@ export function ReportView({ report, onExport }: ReportViewProps) {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
+                      label={({ name, percent }) => `${name}\n${(percent * 100).toFixed(0)}%`}
+                      outerRadius={90}
                       fill="#8884d8"
                       dataKey="value"
                     >
@@ -262,8 +401,53 @@ export function ReportView({ report, onExport }: ReportViewProps) {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <ChartTooltip 
+                      content={<ChartTooltipContent />}
+                      formatter={(value: any) => [`${value}g`, '']}
+                    />
                   </PieChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Weekly Performance */}
+        {weeklyTrend.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Performance Semanal
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer
+                config={{
+                  calorias: { label: "Calorias", color: "hsl(var(--ethra-primary))" },
+                  proteinas: { label: "Proteínas (×10)", color: "hsl(var(--ethra-secondary))" },
+                }}
+                className="h-[300px]"
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={weeklyTrend}>
+                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                    <XAxis dataKey="dia" />
+                    <YAxis />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar 
+                      dataKey="calorias" 
+                      fill="hsl(var(--ethra-primary))" 
+                      radius={[4, 4, 0, 0]}
+                      fillOpacity={0.8}
+                    />
+                    <Bar 
+                      dataKey="proteinas" 
+                      fill="hsl(var(--ethra-secondary))" 
+                      radius={[4, 4, 0, 0]}
+                      fillOpacity={0.6}
+                    />
+                  </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
             </CardContent>
