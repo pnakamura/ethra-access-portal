@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, LogOut, Shield, RefreshCw, Info, User as UserIcon } from 'lucide-react';
+import { ArrowLeft, LogOut, Shield, RefreshCw, Info, User as UserIcon, FileText } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 import { DashboardSkeleton } from '@/components/ui/loading-skeleton';
@@ -356,16 +356,28 @@ export default function Dashboard() {
           )}
           <div className="flex flex-col sm:flex-row gap-2 mt-4">
             {(userProfile?.tipo_usuario === 'gestor' || userProfile?.tipo_usuario === 'socio') && (
-              <Button onClick={() => navigate('/users')} variant="outline" size="sm">
-                <Shield className="h-4 w-4 mr-2" />
-                Gerenciar Usuários
-              </Button>
+              <>
+                <Button onClick={() => navigate('/users')} variant="outline" size="sm">
+                  <Shield className="h-4 w-4 mr-2" />
+                  Gerenciar Usuários
+                </Button>
+                <Button onClick={() => navigate('/reports')} variant="outline" size="sm">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Relatórios
+                </Button>
+              </>
             )}
             {(userProfile?.tipo_usuario === 'cliente' || userProfile?.tipo_usuario === 'dependente') && (
-              <Button onClick={() => navigate('/users')} variant="outline" size="sm">
-                <UserIcon className="h-4 w-4 mr-2" />
-                Meu Perfil
-              </Button>
+              <>
+                <Button onClick={() => navigate('/users')} variant="outline" size="sm">
+                  <UserIcon className="h-4 w-4 mr-2" />
+                  Meu Perfil
+                </Button>
+                <Button onClick={() => navigate('/reports')} variant="outline" size="sm">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Meus Relatórios
+                </Button>
+              </>
             )}
             <Button onClick={handleLogout} variant="destructive" size="sm">
               <LogOut className="h-4 w-4 mr-2" />

@@ -8,6 +8,7 @@ import Auth from "./pages/Auth";
 import UserManagement from "./pages/UserManagement";
 import Dashboard from "./pages/Dashboard";
 import CreateDependent from "./pages/CreateDependent";
+import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/users" element={<UserManagement />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/create-dependent" element={<CreateDependent />} />
+          <Route path="/reports" element={<Reports />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
