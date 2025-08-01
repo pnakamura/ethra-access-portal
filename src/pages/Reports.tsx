@@ -192,12 +192,12 @@ export default function Reports() {
 
       if (error) throw error;
 
-      // Create and download PDF
-      const blob = new Blob([data], { type: 'application/pdf' });
+      // Create and download HTML file (the function returns HTML, not PDF)
+      const blob = new Blob([data], { type: 'text/html' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `relatorio-${reportId}.pdf`;
+      a.download = `relatorio-${reportId}.html`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
