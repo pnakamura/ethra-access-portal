@@ -186,13 +186,13 @@ export default function Reports() {
 
   const handleExportReport = async (reportId: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke('export-report-pdf', {
+      const { data, error } = await supabase.functions.invoke('export-report-html', {
         body: { report_id: reportId }
       });
 
       if (error) throw error;
 
-      // Create and download HTML file (the function returns HTML, not PDF)
+      // Create and download HTML file
       const blob = new Blob([data], { type: 'text/html' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -205,7 +205,7 @@ export default function Reports() {
 
       toast({
         title: "Exportado",
-        description: "Relatório exportado com sucesso!",
+        description: "Relatório exportado como HTML com sucesso!",
       });
     } catch (error) {
       console.error('Erro ao exportar relatório:', error);

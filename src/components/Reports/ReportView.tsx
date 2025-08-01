@@ -129,7 +129,7 @@ export function ReportView({ report, onExport }: ReportViewProps) {
               </Badge>
               <Button onClick={onExport} variant="outline" className="border-ethra text-ethra hover:bg-ethra hover:text-white">
                 <Download className="h-4 w-4 mr-2" />
-                Exportar Relatório
+                Baixar Relatório
               </Button>
             </div>
           </div>
