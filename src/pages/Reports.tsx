@@ -204,14 +204,52 @@ export default function Reports() {
       document.body.removeChild(a);
 
       toast({
-        title: "Exportado",
-        description: "Relatório exportado como HTML com sucesso!",
+        title: "Sucesso",
+        description: "Relatório baixado com sucesso!",
       });
     } catch (error) {
       console.error('Erro ao exportar relatório:', error);
       toast({
         title: "Erro",
-        description: "Falha ao exportar relatório",
+        description: "Falha ao baixar relatório",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteReport = async (reportId: string) => {
+    if (!confirm("Tem certeza que deseja deletar este relatório? Esta ação não pode ser desfeita.")) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('relatorios_semanais')
+        .delete()
+        .eq('id', reportId);
+
+      if (error) {
+        console.error('Delete error:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao deletar relatório",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Refresh reports list
+      await loadReports(selectedUserId);
+      
+      toast({
+        title: "Sucesso",
+        description: "Relatório deletado com sucesso",
+      });
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao deletar relatório",
         variant: "destructive",
       });
     }
@@ -285,6 +323,7 @@ export default function Reports() {
           loading={loading}
           onViewReport={handleViewReport}
           onExportReport={handleExportReport}
+          onDeleteReport={handleDeleteReport}
         />
 
         {/* Generate Report Dialog */}

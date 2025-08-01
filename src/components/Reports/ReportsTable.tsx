@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText, Download, Eye, Calendar } from "lucide-react";
+import { FileText, Download, Eye, Calendar, Trash2 } from "lucide-react";
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -24,9 +24,10 @@ interface ReportsTableProps {
   loading: boolean;
   onViewReport: (report: ReportData) => void;
   onExportReport: (reportId: string) => void;
+  onDeleteReport: (reportId: string) => void;
 }
 
-export function ReportsTable({ reports, loading, onViewReport, onExportReport }: ReportsTableProps) {
+export function ReportsTable({ reports, loading, onViewReport, onExportReport, onDeleteReport }: ReportsTableProps) {
   const getStatusVariant = (status: string) => {
     switch (status) {
       case 'enviado':
@@ -174,7 +175,15 @@ export function ReportsTable({ reports, loading, onViewReport, onExportReport }:
                         onClick={() => onExportReport(report.id)}
                       >
                         <Download className="h-4 w-4 mr-1" />
-                        PDF
+                        Baixar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onDeleteReport(report.id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Deletar
                       </Button>
                     </div>
                   </TableCell>

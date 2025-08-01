@@ -682,6 +682,7 @@ export type Database = {
           data_fim: string
           data_inicio: string
           enviado_em: string | null
+          html_content: string | null
           id: string
           insights: string | null
           status_envio: Database["public"]["Enums"]["tipo_status_envio"] | null
@@ -694,6 +695,7 @@ export type Database = {
           data_fim: string
           data_inicio: string
           enviado_em?: string | null
+          html_content?: string | null
           id?: string
           insights?: string | null
           status_envio?: Database["public"]["Enums"]["tipo_status_envio"] | null
@@ -706,6 +708,7 @@ export type Database = {
           data_fim?: string
           data_inicio?: string
           enviado_em?: string | null
+          html_content?: string | null
           id?: string
           insights?: string | null
           status_envio?: Database["public"]["Enums"]["tipo_status_envio"] | null

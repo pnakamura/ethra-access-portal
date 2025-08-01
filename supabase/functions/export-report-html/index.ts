@@ -52,6 +52,17 @@ serve(async (req) => {
       });
     }
 
+    // If HTML content already exists, return it
+    if (report.html_content) {
+      return new Response(report.html_content, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/html',
+          'Content-Disposition': `attachment; filename="relatorio-${report.data_inicio}-${report.data_fim}.html"`
+        },
+      });
+    }
+
     // Check if user can access this report
     const { data: currentUser } = await supabaseClient
       .from('usuarios')
@@ -84,7 +95,17 @@ serve(async (req) => {
     // Generate HTML content
     const htmlContent = generateHTMLReport(report, reportUser);
 
-    console.log(`✅ HTML report generated for ${report_id}`);
+    // Save HTML content to database
+    const { error: updateError } = await supabaseClient
+      .from('relatorios_semanais')
+      .update({ html_content: htmlContent })
+      .eq('id', report_id);
+
+    if (updateError) {
+      console.error('Error saving HTML content:', updateError);
+    }
+
+    console.log(`✅ HTML report generated and saved for ${report_id}`);
 
     return new Response(htmlContent, {
       status: 200,
