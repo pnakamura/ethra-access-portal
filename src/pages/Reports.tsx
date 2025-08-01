@@ -265,6 +265,7 @@ export default function Reports() {
             title="Visualizar Relatório"
             description={`Relatório de ${selectedReport.data_inicio} a ${selectedReport.data_fim}`}
             showBackButton
+            onBack={() => setSelectedReport(null)}
           />
           <ReportView 
             report={selectedReport} 
