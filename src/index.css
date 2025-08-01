@@ -64,6 +64,13 @@ All colors MUST be HSL.
     --ethra-gradient-accent: linear-gradient(135deg, hsl(45 93% 47%), hsl(11 83% 61%));
     --ethra-glow: 0 0 40px hsl(142 76% 36% / 0.2);
     
+    /* Enhanced Shadows */
+    --shadow-elegant: 0 10px 30px -10px hsl(var(--ethra-primary) / 0.3);
+    --shadow-glow: 0 0 40px hsl(var(--ethra-glow) / 0.4);
+    --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    --shadow-card: 0 4px 16px 0 rgba(0, 0, 0, 0.1);
+    --shadow-card-hover: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+    
     /* Glass morphism - lighter for new theme */
     --glass: 210 20% 98% / 0.8;
     --glass-border: 220 9% 15% / 0.1;
@@ -161,25 +168,60 @@ All colors MUST be HSL.
     transform: scale(1.02);
   }
 
-  /* Glass effect improvements */
+  /* Glassmorphism Effects */
   .bg-glass {
-    background: hsl(var(--glass));
+    background: rgba(255, 255, 255, 0.25);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
   }
-
+  
+  .bg-glass-dark {
+    background: rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  
   .border-glass {
-    border-color: hsl(var(--glass-border));
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+  
+  .bg-glass-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
-  /* Card hover effects for dashboard */
+  /* Card Effects */
   .card-hover {
-    transition: all 0.2s ease-out;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-
+  
   .card-hover:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 20px -2px hsl(var(--ethra-primary) / 0.1);
+    box-shadow: var(--shadow-card-hover);
+  }
+  
+  .card-glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: var(--shadow-glass);
+  }
+  
+  .card-modern {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .card-modern:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: var(--shadow-card-hover);
+    border-color: rgba(255, 255, 255, 0.2);
   }
 
   /* Enhanced focus states */
