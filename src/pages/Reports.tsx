@@ -285,6 +285,7 @@ export default function Reports() {
           title="Relatórios"
           description="Visualize e gere relatórios de progresso nutricional"
           showBackButton
+          onBack={() => navigate('/dashboard')}
           showRefresh
           onRefresh={handleRefresh}
           isRefreshing={refreshing}
