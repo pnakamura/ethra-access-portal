@@ -333,6 +333,7 @@ export default function Reports() {
           open={showGenerateDialog}
           onOpenChange={setShowGenerateDialog}
           onGenerate={handleGenerateReport}
+          selectedUserId={selectedUserId}
         />
       </div>
     </div>

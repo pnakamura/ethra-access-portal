@@ -2,11 +2,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Download, TrendingUp, TrendingDown, Activity, Droplets, Target, Flame, Scale, Heart, Calendar } from "lucide-react";
+import { Download, TrendingUp, TrendingDown, Activity, Droplets, Target, Flame, Scale, Heart, Calendar, AlertTriangle } from "lucide-react";
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useUserGoals } from '@/hooks/useUserGoals';
 
 interface ReportData {
   id: string;
@@ -26,7 +28,24 @@ interface ReportViewProps {
   onExport: () => void;
 }
 
+interface EmptyStateProps {
+  title: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+function EmptyState({ title, description, icon: Icon }: EmptyStateProps) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <Icon className="h-12 w-12 text-muted-foreground mb-4" />
+      <h3 className="text-lg font-medium text-muted-foreground mb-2">{title}</h3>
+      <p className="text-sm text-muted-foreground max-w-md">{description}</p>
+    </div>
+  );
+}
+
 export function ReportView({ report, onExport }: ReportViewProps) {
+  const { goals, loading: goalsLoading, getProteinGoal, getCarbGoal, getFatGoal } = useUserGoals(report.usuario_id);
   const formatDate = (dateString: string) => {
     try {
       return format(parseISO(dateString), 'dd/MM/yyyy', { locale: ptBR });
@@ -73,6 +92,9 @@ export function ReportView({ report, onExport }: ReportViewProps) {
   const nutritionData = report.dados_nutricionais?.diarios || [];
   const totalNutrition = report.dados_nutricionais?.total || {};
   const averageNutrition = report.dados_nutricionais?.media || {};
+  
+  const hasNutritionData = nutritionData.length > 0;
+  const hasValidNutritionData = hasNutritionData && (averageNutrition.calorias > 0 || averageNutrition.proteinas > 0);
 
   // Prepare data for pie chart
   const macroData = [
@@ -86,18 +108,37 @@ export function ReportView({ report, onExport }: ReportViewProps) {
     ...day,
     dia: `Dia ${index + 1}`,
     data_formatada: formatDate(day.data),
-    meta_calorias: 2000, // Could be dynamic based on user goals
-    eficiencia: ((day.calorias || 0) / 2000) * 100,
+    meta_calorias: goals.calorias_diarias || 2000,
+    eficiencia: ((day.calorias || 0) / (goals.calorias_diarias || 2000)) * 100,
   }));
 
   // Radar chart data for nutritional balance
+  const caloriesGoal = goals.calorias_diarias || 2000;
+  const proteinGoal = getProteinGoal(caloriesGoal);
+  const carbGoal = getCarbGoal(caloriesGoal);
+  const fatGoal = getFatGoal(caloriesGoal);
+  
   const radarData = [
-    { metric: 'Calorias', atual: Math.min((averageNutrition.calorias || 0) / 25, 100), meta: 80 },
-    { metric: 'Proteínas', atual: Math.min((averageNutrition.proteinas || 0) / 2, 100), meta: 75 },
-    { metric: 'Carboidratos', atual: Math.min((averageNutrition.carboidratos || 0) / 3, 100), meta: 70 },
-    { metric: 'Gorduras', atual: Math.min((averageNutrition.gorduras || 0) / 1, 100), meta: 65 },
-    { metric: 'Hidratação', atual: 85, meta: 90 }, // Mock data
-    { metric: 'Exercícios', atual: 70, meta: 80 }, // Mock data
+    { 
+      metric: 'Calorias', 
+      atual: Math.min(((averageNutrition.calorias || 0) / caloriesGoal) * 100, 100), 
+      meta: 100 
+    },
+    { 
+      metric: 'Proteínas', 
+      atual: Math.min(((averageNutrition.proteinas || 0) / proteinGoal) * 100, 100), 
+      meta: 100 
+    },
+    { 
+      metric: 'Carboidratos', 
+      atual: Math.min(((averageNutrition.carboidratos || 0) / carbGoal) * 100, 100), 
+      meta: 100 
+    },
+    { 
+      metric: 'Gorduras', 
+      atual: Math.min(((averageNutrition.gorduras || 0) / fatGoal) * 100, 100), 
+      meta: 100 
+    },
   ];
 
   // Comparison data
@@ -176,10 +217,10 @@ export function ReportView({ report, onExport }: ReportViewProps) {
             </div>
             <div className="mt-4">
               <div className="flex items-center justify-between text-xs mb-1">
-                <span>Meta: 2000 kcal</span>
-                <span>{Math.round(((averageNutrition.calorias || 0) / 2000) * 100)}%</span>
+                <span>Meta: {caloriesGoal} kcal</span>
+                <span>{Math.round(((averageNutrition.calorias || 0) / caloriesGoal) * 100)}%</span>
               </div>
-              <Progress value={Math.min(((averageNutrition.calorias || 0) / 2000) * 100, 100)} className="h-2" />
+              <Progress value={Math.min(((averageNutrition.calorias || 0) / caloriesGoal) * 100, 100)} className="h-2" />
             </div>
           </CardContent>
         </Card>
@@ -201,10 +242,10 @@ export function ReportView({ report, onExport }: ReportViewProps) {
             </div>
             <div className="mt-4">
               <div className="flex items-center justify-between text-xs mb-1">
-                <span>Meta: 150g</span>
-                <span>{Math.round(((averageNutrition.proteinas || 0) / 150) * 100)}%</span>
+                <span>Meta: {proteinGoal}g</span>
+                <span>{Math.round(((averageNutrition.proteinas || 0) / proteinGoal) * 100)}%</span>
               </div>
-              <Progress value={Math.min(((averageNutrition.proteinas || 0) / 150) * 100, 100)} className="h-2" />
+              <Progress value={Math.min(((averageNutrition.proteinas || 0) / proteinGoal) * 100, 100)} className="h-2" />
             </div>
           </CardContent>
         </Card>
@@ -226,10 +267,10 @@ export function ReportView({ report, onExport }: ReportViewProps) {
             </div>
             <div className="mt-4">
               <div className="flex items-center justify-between text-xs mb-1">
-                <span>Meta: 250g</span>
-                <span>{Math.round(((averageNutrition.carboidratos || 0) / 250) * 100)}%</span>
+                <span>Meta: {carbGoal}g</span>
+                <span>{Math.round(((averageNutrition.carboidratos || 0) / carbGoal) * 100)}%</span>
               </div>
-              <Progress value={Math.min(((averageNutrition.carboidratos || 0) / 250) * 100, 100)} className="h-2" />
+              <Progress value={Math.min(((averageNutrition.carboidratos || 0) / carbGoal) * 100, 100)} className="h-2" />
             </div>
           </CardContent>
         </Card>
@@ -251,19 +292,40 @@ export function ReportView({ report, onExport }: ReportViewProps) {
             </div>
             <div className="mt-4">
               <div className="flex items-center justify-between text-xs mb-1">
-                <span>Meta: 67g</span>
-                <span>{Math.round(((averageNutrition.gorduras || 0) / 67) * 100)}%</span>
+                <span>Meta: {fatGoal}g</span>
+                <span>{Math.round(((averageNutrition.gorduras || 0) / fatGoal) * 100)}%</span>
               </div>
-              <Progress value={Math.min(((averageNutrition.gorduras || 0) / 67) * 100, 100)} className="h-2" />
+              <Progress value={Math.min(((averageNutrition.gorduras || 0) / fatGoal) * 100, 100)} className="h-2" />
             </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* Data Availability Alert */}
+      {!hasValidNutritionData && (
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            <div className="space-y-2">
+              <p className="font-medium">Dados limitados para o período selecionado</p>
+              <p className="text-sm">
+                {!hasNutritionData 
+                  ? "Nenhum registro nutricional encontrado para este período."
+                  : "Os registros encontrados não contêm dados nutricionais válidos."
+                }
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Para relatórios mais precisos, certifique-se de registrar suas refeições regularmente.
+              </p>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Enhanced Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Daily Nutrition Trend */}
-        {enhancedNutritionData.length > 0 && (
+        {hasValidNutritionData ? (
           <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -296,6 +358,7 @@ export function ReportView({ report, onExport }: ReportViewProps) {
                       fill="hsl(var(--muted-foreground))"
                       fillOpacity={0.1}
                       strokeDasharray="5 5"
+                      key="meta-line"
                     />
                     <Area
                       type="monotone"
@@ -304,6 +367,7 @@ export function ReportView({ report, onExport }: ReportViewProps) {
                       fill="hsl(var(--ethra-primary))"
                       fillOpacity={0.3}
                       strokeWidth={3}
+                      key="calories-area"
                     />
                     <Area
                       type="monotone"
@@ -312,10 +376,27 @@ export function ReportView({ report, onExport }: ReportViewProps) {
                       fill="hsl(var(--ethra-secondary))"
                       fillOpacity={0.2}
                       strokeWidth={2}
+                      key="protein-area"
                     />
                   </AreaChart>
                 </ResponsiveContainer>
               </ChartContainer>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Evolução Nutricional Semanal
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <EmptyState
+                title="Dados insuficientes"
+                description="Não há registros nutricionais suficientes para gerar o gráfico de evolução. Registre suas refeições para visualizar seu progresso."
+                icon={Activity}
+              />
             </CardContent>
           </Card>
         )}
@@ -341,22 +422,24 @@ export function ReportView({ report, onExport }: ReportViewProps) {
                   <PolarGrid />
                   <PolarAngleAxis dataKey="metric" className="text-xs" />
                   <PolarRadiusAxis angle={90} domain={[0, 100]} className="text-xs" />
-                  <Radar
-                    name="Meta"
-                    dataKey="meta"
-                    stroke="hsl(var(--ethra-secondary))"
-                    fill="hsl(var(--ethra-secondary))"
-                    fillOpacity={0.1}
-                    strokeWidth={2}
-                  />
-                  <Radar
-                    name="Atual"
-                    dataKey="atual"
-                    stroke="hsl(var(--ethra-primary))"
-                    fill="hsl(var(--ethra-primary))"
-                    fillOpacity={0.3}
-                    strokeWidth={2}
-                  />
+                    <Radar
+                      name="Meta"
+                      dataKey="meta"
+                      stroke="hsl(var(--ethra-secondary))"
+                      fill="hsl(var(--ethra-secondary))"
+                      fillOpacity={0.1}
+                      strokeWidth={2}
+                      key="meta-radar"
+                    />
+                    <Radar
+                      name="Atual"
+                      dataKey="atual"
+                      stroke="hsl(var(--ethra-primary))"
+                      fill="hsl(var(--ethra-primary))"
+                      fillOpacity={0.3}
+                      strokeWidth={2}
+                      key="actual-radar"
+                    />
                   <ChartTooltip content={<ChartTooltipContent />} />
                 </RadarChart>
               </ResponsiveContainer>
