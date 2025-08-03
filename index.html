@@ -3,18 +3,62 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ethra-access-portal</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
-
-    <meta property="og:title" content="ethra-access-portal" />
-    <meta property="og:description" content="Lovable Generated Project" />
+    <title>Ethra - Sistema de Gestão Nutricional</title>
+    <meta name="description" content="Sistema completo de gestão nutricional com dashboard interativo, acompanhamento de métricas e relatórios personalizados." />
+    <meta name="keywords" content="nutrição, saúde, wellness, dashboard, gestão nutricional, Ethra" />
+    <meta name="author" content="Ethra" />
+    <meta name="robots" content="index, follow" />
+    
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta property="og:title" content="Ethra - Sistema de Gestão Nutricional" />
+    <meta property="og:description" content="Sistema completo de gestão nutricional com dashboard interativo e acompanhamento de métricas." />
+    <meta property="og:image" content="/ethra-og-image.jpg" />
+    <meta property="og:url" content="https://ethra.app" />
+    <meta property="og:site_name" content="Ethra" />
 
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta name="twitter:title" content="Ethra - Sistema de Gestão Nutricional" />
+    <meta name="twitter:description" content="Sistema completo de gestão nutricional com dashboard interativo." />
+    <meta name="twitter:image" content="/ethra-og-image.jpg" />
+    
+    <!-- PWA -->
+    <meta name="theme-color" content="#22c55e" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Ethra" />
+    
+    <!-- Preconnect to improve performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Error monitoring initialization -->
+    <script>
+      window.errorLogger = {
+        captureException: function(error, context) {
+          console.error('Error logged:', error, context);
+          // In production, send to error monitoring service
+          if (typeof fetch !== 'undefined') {
+            fetch('/api/errors', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                error: error.toString(),
+                stack: error.stack,
+                context: context,
+                url: window.location.href,
+                userAgent: navigator.userAgent,
+                timestamp: new Date().toISOString()
+              })
+            }).catch(() => {
+              // Silently fail
+            });
+          }
+        }
+      };
+    </script>
   </head>
 
   <body>

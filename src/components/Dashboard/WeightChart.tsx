@@ -173,9 +173,10 @@ export function WeightChart({ data, metaPeso, period, onPeriodChange }: WeightCh
                   stroke="hsl(var(--primary))" 
                   strokeWidth={3}
                   dot={(props) => {
-                    const { cx, cy } = props;
+                    const { cx, cy, index } = props;
                     return (
                       <circle 
+                        key={`dot-${index}`}
                         cx={cx} 
                         cy={cy} 
                         r={6}

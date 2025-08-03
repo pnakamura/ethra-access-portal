@@ -221,9 +221,10 @@ export function NutritionChart({ data, period, onPeriodChange, metaCalorias = 20
                     strokeWidth={3}
                     fill="url(#caloriesGradient)"
                     dot={(props) => {
-                      const { cx, cy, payload } = props;
+                      const { cx, cy, payload, index } = props;
                       return (
                         <circle 
+                          key={`nutrition-dot-${index}`}
                           cx={cx} 
                           cy={cy} 
                           r={payload.calorias > 0 ? 5 : 0}
