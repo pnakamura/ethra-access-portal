@@ -18,7 +18,11 @@ export function useUserGoals(userId: string) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      setGoals(DEFAULT_GOALS);
+      setLoading(false);
+      return;
+    }
 
     const fetchUserGoals = async () => {
       try {
@@ -28,10 +32,10 @@ export function useUserGoals(userId: string) {
           .from('metas_usuario')
           .select('calorias_diarias, agua_diaria_ml, peso_objetivo')
           .eq('usuario_id', userId)
-          .single();
+          .maybeSingle();
 
-        if (error && error.code !== 'PGRST116') {
-          console.error('Erro ao carregar metas do usuário:', error);
+        if (error) {
+          console.warn('Metas do usuário não encontradas, usando padrões:', error.message);
           setGoals(DEFAULT_GOALS);
           return;
         }
@@ -46,7 +50,7 @@ export function useUserGoals(userId: string) {
           setGoals(DEFAULT_GOALS);
         }
       } catch (error) {
-        console.error('Erro ao buscar metas:', error);
+        console.warn('Erro ao buscar metas, usando padrões:', error);
         setGoals(DEFAULT_GOALS);
       } finally {
         setLoading(false);
