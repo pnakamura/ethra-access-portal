@@ -20,57 +20,7 @@ const Index = () => {
     
     const initializeAuth = async () => {
       try {
-        // Set up auth state listener FIRST
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          async (event, session) => {
-            try {
-              if (!mounted) return;
-              
-              console.log('Auth state change:', event, session?.user?.id);
-              setSession(session);
-              setUser(session?.user ?? null);
-              
-              if (session?.user) {
-                // Load user profile
-                const { data: profile, error } = await supabase
-                  .from('usuarios')
-                  .select('*')
-                  .eq('id', session.user.id)
-                  .maybeSingle();
-                
-                if (error) {
-                  console.error('Error fetching user profile:', error);
-                  if (mounted) {
-                    toast({
-                      title: "Erro ao carregar perfil",
-                      description: "Não foi possível carregar seus dados. Verifique sua conexão.",
-                      variant: "destructive",
-                    });
-                  }
-                } else {
-                  console.log('User profile loaded:', profile);
-                }
-                
-                if (mounted) setUserProfile(profile);
-              } else {
-                if (mounted) setUserProfile(null);
-              }
-            } catch (error) {
-              console.error('Auth state change error:', error);
-              if (mounted) {
-                toast({
-                  title: "Erro de conectividade",
-                  description: "Problema na conexão com o servidor. Tente recarregar a página.",
-                  variant: "destructive",
-                });
-              }
-            } finally {
-              if (mounted) setIsLoading(false);
-            }
-          }
-        );
-
-        // THEN check for existing session
+        // FIRST check for existing session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
@@ -88,34 +38,71 @@ const Index = () => {
 
         console.log('Initial session check:', session?.user?.id);
         
+        // Load initial state
         if (mounted) {
           setSession(session);
           setUser(session?.user ?? null);
           
           if (session?.user) {
-            // Load user profile
-            const { data: profile, error } = await supabase
-              .from('usuarios')
-              .select('*')
-              .eq('id', session.user.id)
-              .maybeSingle();
-            
-            if (error) {
-              console.error('Error fetching user profile on init:', error);
-              toast({
-                title: "Erro ao carregar perfil",
-                description: "Não foi possível carregar seus dados. Verifique sua conexão.",
-                variant: "destructive",
-              });
-            } else {
-              console.log('Initial user profile loaded:', profile);
+            try {
+              const { data: profile, error } = await supabase
+                .from('usuarios')
+                .select('*')
+                .eq('id', session.user.id)
+                .maybeSingle();
+              
+              if (error) {
+                console.warn('Error fetching user profile on init:', error);
+                toast({
+                  title: "Aviso",
+                  description: "Não foi possível carregar alguns dados do perfil.",
+                  variant: "default",
+                });
+              }
+              
+              setUserProfile(profile);
+            } catch (error) {
+              console.warn('Profile fetch error:', error);
             }
-            
-            setUserProfile(profile);
           }
           
           setIsLoading(false);
         }
+
+        // THEN set up auth state listener for future changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            try {
+              if (!mounted) return;
+              
+              console.log('Auth state change:', event, session?.user?.id);
+              setSession(session);
+              setUser(session?.user ?? null);
+              
+              if (session?.user) {
+                try {
+                  const { data: profile, error } = await supabase
+                    .from('usuarios')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .maybeSingle();
+                  
+                  if (error) {
+                    console.warn('Error fetching user profile:', error);
+                  }
+                  
+                  setUserProfile(profile);
+                } catch (error) {
+                  console.warn('Profile update error:', error);
+                }
+              } else {
+                setUserProfile(null);
+              }
+            } catch (error) {
+              console.error('Auth state change error:', error);
+            }
+          }
+        );
 
         return () => {
           subscription.unsubscribe();
