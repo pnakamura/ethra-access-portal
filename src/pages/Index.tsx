@@ -16,10 +16,79 @@ const Index = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        try {
+    let mounted = true;
+    
+    const initializeAuth = async () => {
+      try {
+        // Set up auth state listener FIRST
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            try {
+              if (!mounted) return;
+              
+              console.log('Auth state change:', event, session?.user?.id);
+              setSession(session);
+              setUser(session?.user ?? null);
+              
+              if (session?.user) {
+                // Load user profile
+                const { data: profile, error } = await supabase
+                  .from('usuarios')
+                  .select('*')
+                  .eq('id', session.user.id)
+                  .maybeSingle();
+                
+                if (error) {
+                  console.error('Error fetching user profile:', error);
+                  if (mounted) {
+                    toast({
+                      title: "Erro ao carregar perfil",
+                      description: "Não foi possível carregar seus dados. Verifique sua conexão.",
+                      variant: "destructive",
+                    });
+                  }
+                } else {
+                  console.log('User profile loaded:', profile);
+                }
+                
+                if (mounted) setUserProfile(profile);
+              } else {
+                if (mounted) setUserProfile(null);
+              }
+            } catch (error) {
+              console.error('Auth state change error:', error);
+              if (mounted) {
+                toast({
+                  title: "Erro de conectividade",
+                  description: "Problema na conexão com o servidor. Tente recarregar a página.",
+                  variant: "destructive",
+                });
+              }
+            } finally {
+              if (mounted) setIsLoading(false);
+            }
+          }
+        );
+
+        // THEN check for existing session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          if (mounted) {
+            toast({
+              title: "Erro de sessão",
+              description: "Problema ao verificar sua sessão. Faça login novamente.",
+              variant: "destructive",
+            });
+            setIsLoading(false);
+          }
+          return;
+        }
+
+        console.log('Initial session check:', session?.user?.id);
+        
+        if (mounted) {
           setSession(session);
           setUser(session?.user ?? null);
           
@@ -32,59 +101,44 @@ const Index = () => {
               .maybeSingle();
             
             if (error) {
-              console.error('Error fetching user profile:', error);
+              console.error('Error fetching user profile on init:', error);
               toast({
                 title: "Erro ao carregar perfil",
-                description: "Não foi possível carregar seus dados. Tente novamente.",
+                description: "Não foi possível carregar seus dados. Verifique sua conexão.",
                 variant: "destructive",
               });
+            } else {
+              console.log('Initial user profile loaded:', profile);
             }
             
             setUserProfile(profile);
-          } else {
-            setUserProfile(null);
           }
-        } catch (error) {
-          console.error('Auth state change error:', error);
-        } finally {
+          
+          setIsLoading(false);
+        }
+
+        return () => {
+          subscription.unsubscribe();
+        };
+        
+      } catch (error) {
+        console.error('Initialize auth error:', error);
+        if (mounted) {
+          toast({
+            title: "Erro de inicialização",
+            description: "Falha ao inicializar o sistema. Recarregue a página.",
+            variant: "destructive",
+          });
           setIsLoading(false);
         }
       }
-    );
+    };
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      try {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Load user profile
-          const { data: profile, error } = await supabase
-            .from('usuarios')
-            .select('*')
-            .eq('id', session.user.id)
-            .maybeSingle();
-          
-          if (error) {
-            console.error('Error fetching user profile:', error);
-            toast({
-              title: "Erro ao carregar perfil",
-              description: "Não foi possível carregar seus dados. Tente novamente.",
-              variant: "destructive",
-            });
-          }
-          
-          setUserProfile(profile);
-        }
-      } catch (error) {
-        console.error('Session check error:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    });
+    initializeAuth();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+    };
   }, [toast]);
 
   const handleSignOut = async () => {
