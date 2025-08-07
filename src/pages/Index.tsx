@@ -17,10 +17,58 @@ const Index = () => {
 
   useEffect(() => {
     let mounted = true;
+    let authSubscription: { unsubscribe: () => void } | null = null;
     
     const initializeAuth = async () => {
       try {
-        // FIRST check for existing session
+        setIsLoading(true);
+        
+        // FIRST set up auth state listener to handle auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            try {
+              if (!mounted) return;
+              
+              console.log('Auth state change:', event, session?.user?.id);
+              
+              // Only update session/user state synchronously
+              setSession(session);
+              setUser(session?.user ?? null);
+              
+              // Defer profile loading to avoid blocking auth flow
+              if (session?.user) {
+                setTimeout(async () => {
+                  if (!mounted) return;
+                  try {
+                    const { data: profile, error } = await supabase
+                      .from('usuarios')
+                      .select('*')
+                      .eq('id', session.user.id)
+                      .maybeSingle();
+                    
+                    if (error) {
+                      console.warn('Error fetching user profile:', error);
+                    }
+                    
+                    if (mounted) {
+                      setUserProfile(profile);
+                    }
+                  } catch (error) {
+                    console.warn('Profile update error:', error);
+                  }
+                }, 0);
+              } else {
+                setUserProfile(null);
+              }
+            } catch (error) {
+              console.error('Auth state change error:', error);
+            }
+          }
+        );
+        
+        authSubscription = subscription;
+
+        // THEN check for existing session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
@@ -31,82 +79,39 @@ const Index = () => {
               description: "Problema ao verificar sua sessão. Faça login novamente.",
               variant: "destructive",
             });
-            setIsLoading(false);
           }
-          return;
-        }
-
-        console.log('Initial session check:', session?.user?.id);
-        
-        // Load initial state
-        if (mounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
+        } else {
+          console.log('Initial session check:', session?.user?.id);
           
-          if (session?.user) {
-            try {
-              const { data: profile, error } = await supabase
-                .from('usuarios')
-                .select('*')
-                .eq('id', session.user.id)
-                .maybeSingle();
-              
-              if (error) {
-                console.warn('Error fetching user profile on init:', error);
-                toast({
-                  title: "Aviso",
-                  description: "Não foi possível carregar alguns dados do perfil.",
-                  variant: "default",
-                });
-              }
-              
-              setUserProfile(profile);
-            } catch (error) {
-              console.warn('Profile fetch error:', error);
-            }
-          }
-          
-          setIsLoading(false);
-        }
-
-        // THEN set up auth state listener for future changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          async (event, session) => {
-            try {
-              if (!mounted) return;
-              
-              console.log('Auth state change:', event, session?.user?.id);
-              setSession(session);
-              setUser(session?.user ?? null);
-              
-              if (session?.user) {
-                try {
-                  const { data: profile, error } = await supabase
-                    .from('usuarios')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .maybeSingle();
-                  
-                  if (error) {
-                    console.warn('Error fetching user profile:', error);
-                  }
-                  
-                  setUserProfile(profile);
-                } catch (error) {
-                  console.warn('Profile update error:', error);
+          // Load initial state
+          if (mounted) {
+            setSession(session);
+            setUser(session?.user ?? null);
+            
+            if (session?.user) {
+              try {
+                const { data: profile, error } = await supabase
+                  .from('usuarios')
+                  .select('*')
+                  .eq('id', session.user.id)
+                  .maybeSingle();
+                
+                if (error) {
+                  console.warn('Error fetching user profile on init:', error);
+                  toast({
+                    title: "Aviso",
+                    description: "Não foi possível carregar alguns dados do perfil.",
+                    variant: "default",
+                  });
                 }
-              } else {
-                setUserProfile(null);
+                
+                setUserProfile(profile);
+              } catch (error) {
+                console.warn('Profile fetch error:', error);
               }
-            } catch (error) {
-              console.error('Auth state change error:', error);
             }
           }
-        );
-
-        return () => {
-          subscription.unsubscribe();
-        };
+        }
         
       } catch (error) {
         console.error('Initialize auth error:', error);
@@ -116,6 +121,9 @@ const Index = () => {
             description: "Falha ao inicializar o sistema. Recarregue a página.",
             variant: "destructive",
           });
+        }
+      } finally {
+        if (mounted) {
           setIsLoading(false);
         }
       }
@@ -125,6 +133,9 @@ const Index = () => {
 
     return () => {
       mounted = false;
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
     };
   }, [toast]);
 

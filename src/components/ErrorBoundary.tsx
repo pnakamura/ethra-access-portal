@@ -12,6 +12,7 @@ interface State {
   hasError: boolean;
   error: Error | null;
   errorInfo: ErrorInfo | null;
+  retryCount: number;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -19,9 +20,10 @@ export class ErrorBoundary extends Component<Props, State> {
     hasError: false,
     error: null,
     errorInfo: null,
+    retryCount: 0,
   };
 
-  public static getDerivedStateFromError(error: Error): State {
+  public static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error, errorInfo: null };
   }
 
@@ -39,10 +41,24 @@ export class ErrorBoundary extends Component<Props, State> {
         extra: errorInfo,
         tags: {
           component: 'ErrorBoundary',
+          retryCount: this.state.retryCount,
         },
       });
     }
   }
+
+  private handleRetry = () => {
+    if (this.state.retryCount < 3) {
+      this.setState(prevState => ({
+        hasError: false,
+        error: null,
+        errorInfo: null,
+        retryCount: prevState.retryCount + 1,
+      }));
+    } else {
+      window.location.reload();
+    }
+  };
 
   private handleReload = () => {
     window.location.reload();
@@ -72,6 +88,12 @@ export class ErrorBoundary extends Component<Props, State> {
                 Ocorreu um erro inesperado. Nossa equipe foi notificada e está trabalhando para resolver.
               </p>
               
+              {this.state.retryCount > 0 && (
+                <p className="text-sm text-center text-muted-foreground">
+                  Tentativa {this.state.retryCount} de 3
+                </p>
+              )}
+              
               {process.env.NODE_ENV === 'development' && this.state.error && (
                 <details className="mt-4 p-3 bg-muted rounded-lg text-xs">
                   <summary className="cursor-pointer font-medium mb-2">
@@ -84,14 +106,21 @@ export class ErrorBoundary extends Component<Props, State> {
                 </details>
               )}
 
-              <div className="flex gap-2 pt-4">
-                <Button onClick={this.handleReload} className="flex-1" variant="outline">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Recarregar
-                </Button>
-                <Button onClick={this.handleGoHome} className="flex-1">
+              <div className="flex flex-col gap-2 pt-4">
+                {this.state.retryCount < 3 ? (
+                  <Button onClick={this.handleRetry} className="w-full">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Tentar Novamente
+                  </Button>
+                ) : (
+                  <Button onClick={this.handleReload} className="w-full">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Recarregar Página
+                  </Button>
+                )}
+                <Button onClick={this.handleGoHome} variant="outline" className="w-full">
                   <Home className="h-4 w-4 mr-2" />
-                  Início
+                  Ir para Início
                 </Button>
               </div>
             </CardContent>
@@ -104,7 +133,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-// Hook-based error boundary for functional components
+// Hook-based error handler for functional components
 export const useErrorHandler = () => {
   return (error: Error, errorInfo?: ErrorInfo) => {
     console.error('Error caught by handler:', error, errorInfo);

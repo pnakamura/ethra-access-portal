@@ -61,69 +61,98 @@ export default function Dashboard() {
 
   const checkAuthAndLoadData = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      setLoading(true);
+      
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.error('Auth error:', userError);
         navigate('/auth');
         return;
       }
       
       setUser(user);
 
-      // Get user profile
+      // Get user profile with error handling
       const { data: profile, error: profileError } = await supabase
         .from('usuarios')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError) {
         console.error('Erro ao carregar perfil:', profileError);
         toast({
           title: "Erro",
-          description: "Falha ao carregar perfil do usuário",
+          description: "Falha ao carregar perfil do usuário. Verifique sua conexão.",
           variant: "destructive",
         });
+        
+        // Still allow access with basic user info
+        setUserProfile(null);
+        setSelectedUserId(user.id);
+        setSelectedUserProfile(null);
         return;
       }
 
       setUserProfile(profile);
       setSelectedUserId(user.id);
       setSelectedUserProfile(profile);
-      await loadDashboardData(user.id);
+      
+      // Load dashboard data only if profile loaded successfully
+      if (profile) {
+        await loadDashboardData(user.id);
+      }
     } catch (error) {
       console.error('Erro na verificação de autenticação:', error);
+      toast({
+        title: "Erro de conexão",
+        description: "Falha na autenticação. Redirecionando para login.",
+        variant: "destructive",
+      });
       navigate('/auth');
     }
   };
 
   const loadDashboardData = async (userId: string) => {
     try {
-      setLoading(true);
-      
-      // Load dashboard summary data
-      const { data: dashData, error: dashError } = await supabase
+      // Load dashboard summary data with timeout
+      const dashboardPromise = supabase
         .rpc('get_user_dashboard_data', { user_id: userId });
 
-      if (dashError) throw dashError;
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout')), 10000)
+      );
+
+      const result = await Promise.race([
+        dashboardPromise,
+        timeoutPromise
+      ]);
       
-      if (dashData && dashData.length > 0) {
+      const { data: dashData, error: dashError } = result as any;
+
+      if (dashError) {
+        console.error('Dashboard data error:', dashError);
+        toast({
+          title: "Aviso",
+          description: "Alguns dados podem estar indisponíveis temporariamente.",
+          variant: "default",
+        });
+      } else if (dashData && dashData.length > 0) {
         setDashboardData(dashData[0]);
       }
 
-      // Load nutrition data
-      await loadNutritionData(userId, nutritionPeriod);
-      
-      // Load weight data
-      await loadWeightData(userId, weightPeriod);
-      
-      // Load hydration data (last 7 days)
-      await loadHydrationData(userId);
+      // Load charts data in parallel with error isolation
+      await Promise.allSettled([
+        loadNutritionData(userId, nutritionPeriod),
+        loadWeightData(userId, weightPeriod),
+        loadHydrationData(userId)
+      ]);
       
     } catch (error) {
       console.error('Erro ao carregar dados do dashboard:', error);
       toast({
-        title: "Erro",
-        description: "Falha ao carregar dados do dashboard",
+        title: "Conexão instável",
+        description: "Verifique sua conexão e tente recarregar os dados.",
         variant: "destructive",
       });
     } finally {
