@@ -18,6 +18,7 @@ import { UserFilters } from '@/components/UserManagement/UserFilters';
 import { UserStats } from '@/components/UserManagement/UserStats';
 import { UserTable } from '@/components/UserManagement/UserTable';
 import { useNavigate } from 'react-router-dom';
+import { CreateUserDialog } from '@/components/UserManagement/CreateUserDialog';
 
 interface Usuario {
   id: string;
@@ -57,6 +58,7 @@ export default function UserManagement() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   // Filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [tipoUsuarioFilter, setTipoUsuarioFilter] = useState('all');
@@ -598,7 +600,7 @@ export default function UserManagement() {
             </div>
           )}
           <div className="flex flex-col sm:flex-row gap-2 mt-4">
-            {isProfileMode && (
+            {isProfileMode ? (
               <>
                 <Button onClick={() => handleEdit(userProfile)} size="sm">
                   <Pencil className="h-4 w-4 mr-2" />
@@ -607,6 +609,21 @@ export default function UserManagement() {
                 <Button onClick={() => setIsPasswordDialogOpen(true)} variant="outline" size="sm">
                   Alterar Senha
                 </Button>
+              </>
+            ) : (
+              <>
+                {userProfile?.tipo_usuario === 'socio' && (
+                  <Button size="sm" onClick={() => setIsCreateDialogOpen(true)}>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Criar Usuário
+                  </Button>
+                )}
+                {userProfile?.tipo_usuario === 'gestor' && (
+                  <Button size="sm" onClick={() => navigate('/create-dependent')}>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Adicionar Dependente
+                  </Button>
+                )}
               </>
             )}
             <Button onClick={handleLogout} variant="destructive" size="sm">
@@ -909,7 +926,14 @@ export default function UserManagement() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <CreateUserDialog
+          open={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
+          onCreated={() => loadUsuarios()}
+        />
       </div>
     </div>
   );
 }
+
