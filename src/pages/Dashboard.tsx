@@ -18,6 +18,9 @@ import { RecentMeals } from '@/components/Dashboard/RecentMeals';
 import { GoalsConfig } from '@/components/Dashboard/GoalsConfig';
 import { NutritionInsights } from '@/components/Dashboard/NutritionInsights';
 import { useNavigate } from 'react-router-dom';
+import { AchievementSystem } from '@/components/UX/AchievementSystem';
+import { SmartInsights } from '@/components/UX/SmartInsights';
+import { QuickActions } from '@/components/UX/QuickActions';
 
 interface DashboardData {
   peso_atual: number;
@@ -441,6 +444,28 @@ export default function Dashboard() {
           />
         )}
 
+        {/* Smart Insights */}
+        <div className="mb-6">
+          <SmartInsights
+            dashboardData={dashboardData}
+            nutritionData={nutritionData}
+            weightData={weightData}
+            hydrationData={hydrationData}
+          />
+        </div>
+
+        {/* Achievement System */}
+        {dashboardData && (
+          <div className="mb-6">
+            <AchievementSystem
+              dashboardData={dashboardData}
+              nutritionData={nutritionData}
+              weightData={weightData}
+              hydrationData={hydrationData}
+            />
+          </div>
+        )}
+
         {/* Goals Configuration */}
         {dashboardData && selectedUserId === user?.id && (
           <div className="mb-6">
@@ -513,6 +538,14 @@ export default function Dashboard() {
             />
           )}
         </div>
+
+        {/* Quick Actions Floating Button */}
+        {selectedUserId && (
+          <QuickActions 
+            userId={selectedUserId} 
+            onDataUpdate={() => loadDashboardData(selectedUserId)} 
+          />
+        )}
       </div>
     </div>
   );
