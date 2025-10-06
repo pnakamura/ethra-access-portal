@@ -41,9 +41,9 @@ export function RecentMeals({ userId }: RecentMealsProps) {
     try {
       setLoading(true);
       
-      // Construir as datas corretamente para evitar problemas de timezone
-      const startDate = `${selectedDate}T00:00:00.000Z`;
-      const endDate = `${selectedDate}T23:59:59.999Z`;
+      // Construir as datas no timezone local para corresponder ao gráfico
+      const startDate = `${selectedDate}T00:00:00`;
+      const endDate = `${selectedDate}T23:59:59`;
 
       const { data, error } = await supabase
         .from('informacoes_nutricionais')
