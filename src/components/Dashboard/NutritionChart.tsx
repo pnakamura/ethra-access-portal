@@ -35,18 +35,24 @@ export function NutritionChart({ data, period, onPeriodChange, metaCalorias = 20
   const processChartData = () => {
     if (!data || data.length === 0) return [];
 
-    // Create a complete date range for the period
+    // Create a complete date range for the period using UTC dates
     const days = period === "7d" ? 7 : 30;
     const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999); // End of today
     const startDate = new Date();
     startDate.setDate(endDate.getDate() - days + 1);
+    startDate.setHours(0, 0, 0, 0); // Start of the first day
     
     const dateRange = [];
     for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      dateRange.push(new Date(d));
+      // Use local date string (YYYY-MM-DD) consistently
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      dateRange.push(`${year}-${month}-${day}`);
     }
 
-    // Group existing data by date
+    // Group existing data by date (extracting UTC date part)
     const groupedData = data.reduce((acc, item) => {
       const dateStr = item.data_registro.includes('T') 
         ? item.data_registro.split('T')[0] 
@@ -70,8 +76,7 @@ export function NutritionChart({ data, period, onPeriodChange, metaCalorias = 20
     }, {} as Record<string, any>);
 
     // Create complete dataset with all dates
-    return dateRange.map(date => {
-      const dateStr = date.toISOString().split('T')[0];
+    return dateRange.map(dateStr => {
       const dayData = groupedData[dateStr] || { calorias: 0, proteinas: 0, carboidratos: 0, gorduras: 0 };
       
       return {

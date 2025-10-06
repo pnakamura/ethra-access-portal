@@ -32,7 +32,6 @@ export function RecentMeals({ userId }: RecentMealsProps) {
   );
 
   useEffect(() => {
-    console.log('🍽️ RecentMeals useEffect - userId:', userId, 'selectedDate:', selectedDate);
     if (userId) {
       loadMealsForDate();
     }
@@ -42,13 +41,9 @@ export function RecentMeals({ userId }: RecentMealsProps) {
     try {
       setLoading(true);
       
-      console.log('🍽️ RecentMeals - selectedDate:', selectedDate);
-      
       // Buscar pela data UTC direta, igual ao gráfico faz
       const startDateUTC = `${selectedDate}T00:00:00.000Z`;
       const endDateUTC = `${selectedDate}T23:59:59.999Z`;
-      
-      console.log('🍽️ RecentMeals - Query range:', { startDateUTC, endDateUTC });
 
       const { data, error } = await supabase
         .from('informacoes_nutricionais')
@@ -68,11 +63,6 @@ export function RecentMeals({ userId }: RecentMealsProps) {
         .gte('data_registro', startDateUTC)
         .lte('data_registro', endDateUTC)
         .order('data_registro', { ascending: false });
-      
-      console.log('🍽️ RecentMeals - Results:', data?.length || 0, 'meals found');
-      if (data && data.length > 0) {
-        console.log('🍽️ RecentMeals - Sample timestamps:', data.map(m => m.data_registro));
-      }
 
       if (!error && data) {
         const mealsWithCategory = data.map(meal => ({
