@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, Utensils, Calendar, Flame, Apple, Wheat, Droplets } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface MealData {
   id: string;
@@ -183,11 +184,12 @@ export function RecentMeals({ userId }: RecentMealsProps) {
       </CardHeader>
       <CardContent className="space-y-3">
         {meals.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <Utensils className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>Nenhuma refeição registrada para este dia</p>
-            <p className="text-xs mt-1">Selecione outro dia para visualizar</p>
-          </div>
+          <EmptyState
+            icon={<Utensils className="h-8 w-8 text-muted-foreground" />}
+            title="Nenhuma refeição registrada"
+            description={`Não há refeições registradas para ${new Date(selectedDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}. Selecione outro dia ou registre uma nova refeição.`}
+            className="my-4"
+          />
         ) : (
           meals.map((meal) => (
             <Collapsible key={meal.id}>

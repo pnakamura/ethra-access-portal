@@ -12,6 +12,13 @@ import { ValidatedInput, PasswordStrengthIndicator } from '@/components/ui/form-
 import { successToast, errorToast } from '@/components/ui/enhanced-toast';
 import type { User, Session } from '@supabase/supabase-js';
 import ethraBg from '@/assets/ethra-bg.jpg';
+import { z } from 'zod';
+
+// Validation schemas
+const emailSchema = z.string().email({ message: "Email inválido" }).trim();
+const passwordSchema = z.string().min(6, { message: "A senha deve ter pelo menos 6 caracteres" });
+const nameSchema = z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }).max(100, { message: "Nome muito longo" }).trim();
+const phoneSchema = z.string().regex(/^\(\d{2}\)\s\d{8,9}$/, { message: "Telefone inválido. Use o formato (XX) XXXXXXXXX" });
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -170,19 +177,27 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate inputs
+    try {
+      emailSchema.parse(email);
+      passwordSchema.parse(password);
+      nameSchema.parse(fullName);
+      if (phone) phoneSchema.parse(phone);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Erro de validação",
+          description: error.errors[0].message,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     if (password !== confirmPassword) {
       toast({
         title: "Erro de validação",
         description: "As senhas não coincidem.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (password.length < 6) {
-      toast({
-        title: "Erro de validação",
-        description: "A senha deve ter pelo menos 6 caracteres.",
         variant: "destructive",
       });
       return;
@@ -247,6 +262,22 @@ const Auth = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate inputs
+    try {
+      emailSchema.parse(email);
+      passwordSchema.parse(password);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Erro de validação",
+          description: error.errors[0].message,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     setIsLoading(true);
 
     try {

@@ -3,6 +3,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Activity, TrendingUp, Target } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface NutritionData {
   data_registro: string;
@@ -111,10 +112,12 @@ export function NutritionChart({ data, period, onPeriodChange, metaCalorias = 20
             Evolução Nutricional
           </CardTitle>
           <div className="flex gap-2">
-            <Button
+            <Button 
               variant={period === "7d" ? "default" : "outline"}
               size="sm"
               onClick={() => onPeriodChange("7d")}
+              aria-label="Filtrar dados dos últimos 7 dias"
+              aria-pressed={period === "7d"}
             >
               7 dias
             </Button>
@@ -122,6 +125,8 @@ export function NutritionChart({ data, period, onPeriodChange, metaCalorias = 20
               variant={period === "30d" ? "default" : "outline"}
               size="sm"
               onClick={() => onPeriodChange("30d")}
+              aria-label="Filtrar dados dos últimos 30 dias"
+              aria-pressed={period === "30d"}
             >
               30 dias
             </Button>
@@ -150,6 +155,8 @@ export function NutritionChart({ data, period, onPeriodChange, metaCalorias = 20
             variant={activeChart === "calories" ? "default" : "outline"}
             size="sm"
             onClick={() => setActiveChart("calories")}
+            aria-label="Visualizar gráfico de calorias"
+            aria-pressed={activeChart === "calories"}
           >
             Calorias
           </Button>
@@ -157,6 +164,8 @@ export function NutritionChart({ data, period, onPeriodChange, metaCalorias = 20
             variant={activeChart === "macros" ? "default" : "outline"}
             size="sm"
             onClick={() => setActiveChart("macros")}
+            aria-label="Visualizar gráfico de macronutrientes"
+            aria-pressed={activeChart === "macros"}
           >
             Macronutrientes
           </Button>
@@ -164,13 +173,11 @@ export function NutritionChart({ data, period, onPeriodChange, metaCalorias = 20
       </CardHeader>
       <CardContent>
         {chartData.length === 0 ? (
-          <div className="h-80 flex items-center justify-center">
-            <div className="text-center text-muted-foreground">
-              <Activity className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>Nenhum dado nutricional encontrado</p>
-              <p className="text-sm">Registre suas refeições para ver os gráficos</p>
-            </div>
-          </div>
+          <EmptyState
+            icon={<Activity className="h-8 w-8 text-muted-foreground" />}
+            title="Nenhum dado nutricional encontrado"
+            description="Comece registrando suas refeições para visualizar seus gráficos de evolução nutricional e acompanhar seu progresso."
+          />
         ) : (
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">

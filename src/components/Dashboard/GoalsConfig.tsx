@@ -88,7 +88,12 @@ export function GoalsConfig({ userId, currentGoals, onGoalsUpdate }: GoalsConfig
             Configurar Metas
           </CardTitle>
           {!editing && (
-            <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setEditing(true)}
+              aria-label="Editar metas de peso, calorias e água"
+            >
               <Edit3 className="h-4 w-4 mr-2" />
               Editar
             </Button>
@@ -132,11 +137,11 @@ export function GoalsConfig({ userId, currentGoals, onGoalsUpdate }: GoalsConfig
             </div>
             
             <div className="flex gap-2">
-              <Button onClick={handleSave} disabled={saving} className="flex-1">
+              <Button onClick={handleSave} disabled={saving} className="flex-1" aria-label="Salvar metas configuradas">
                 <Save className="h-4 w-4 mr-2" />
                 {saving ? 'Salvando...' : 'Salvar'}
               </Button>
-              <Button variant="outline" onClick={handleCancel} disabled={saving}>
+              <Button variant="outline" onClick={handleCancel} disabled={saving} aria-label="Cancelar edição de metas">
                 Cancelar
               </Button>
             </div>

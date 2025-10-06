@@ -58,9 +58,11 @@ export function PageHeader({
             variant="outline" 
             disabled={isRefreshing}
             className="w-full sm:w-auto"
+            aria-label="Atualizar dados da página"
+            aria-busy={isRefreshing}
           >
             <RefreshCw className={cn("h-4 w-4 mr-2", isRefreshing && "animate-spin")} />
-            Atualizar
+            {isRefreshing ? "Atualizando..." : "Atualizar"}
           </Button>
         )}
         
@@ -69,6 +71,7 @@ export function PageHeader({
             onClick={handleBack} 
             variant="outline"
             className="w-full sm:w-auto"
+            aria-label="Voltar para página anterior"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar

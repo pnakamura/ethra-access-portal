@@ -27,7 +27,8 @@ interface ReportsTableProps {
   loading: boolean;
   onViewReport: (report: ReportData) => void;
   onExportReport: (reportId: string) => void;
-  onDeleteReport: (reportId: string) => void;
+  onDeleteReport: (report: ReportData) => void;
+  deletingReportId?: string | null;
   showFilters?: boolean;
 }
 
@@ -58,7 +59,7 @@ function LoadingSkeleton() {
   );
 }
 
-export function ReportsTable({ reports, loading, onViewReport, onExportReport, onDeleteReport, showFilters = true }: ReportsTableProps) {
+export function ReportsTable({ reports, loading, onViewReport, onExportReport, onDeleteReport, deletingReportId, showFilters = true }: ReportsTableProps) {
   const [filters, setFilters] = useState<ReportFilters>({});
 
   const filteredReports = useMemo(() => {
@@ -285,6 +286,7 @@ export function ReportsTable({ reports, loading, onViewReport, onExportReport, o
                         variant="outline"
                         size="sm"
                         onClick={() => onViewReport(report)}
+                        aria-label={`Visualizar relatório de ${formatDate(report.data_inicio)} a ${formatDate(report.data_fim)}`}
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         Ver
@@ -293,6 +295,7 @@ export function ReportsTable({ reports, loading, onViewReport, onExportReport, o
                         variant="outline"
                         size="sm"
                         onClick={() => onExportReport(report.id)}
+                        aria-label={`Baixar relatório de ${formatDate(report.data_inicio)} a ${formatDate(report.data_fim)}`}
                       >
                         <Download className="h-4 w-4 mr-1" />
                         Baixar
@@ -300,10 +303,12 @@ export function ReportsTable({ reports, loading, onViewReport, onExportReport, o
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => onDeleteReport(report.id)}
+                        onClick={() => onDeleteReport(report)}
+                        disabled={deletingReportId === report.id}
+                        aria-label={`Deletar relatório de ${formatDate(report.data_inicio)} a ${formatDate(report.data_fim)}`}
                       >
                         <Trash2 className="h-4 w-4 mr-1" />
-                        Deletar
+                        {deletingReportId === report.id ? "Deletando..." : "Deletar"}
                       </Button>
                     </div>
                   </TableCell>

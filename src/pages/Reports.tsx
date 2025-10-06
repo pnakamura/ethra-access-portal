@@ -3,8 +3,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, FileText, RefreshCw, Download } from 'lucide-react';
+import { ArrowLeft, Plus, FileText, RefreshCw, Download, AlertTriangle } from 'lucide-react';
 import { Breadcrumbs } from '@/components/ui/breadcrumbs';
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from '@/components/ui/alert-dialog';
 import { PageHeader } from '@/components/ui/page-header';
 import { ReportsTable } from '@/components/Reports/ReportsTable';
 import { ReportView } from '@/components/Reports/ReportView';
@@ -42,6 +52,9 @@ export default function Reports() {
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [deletingReportId, setDeletingReportId] = useState<string | null>(null);
+  const [reportToDelete, setReportToDelete] = useState<ReportData | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -217,16 +230,21 @@ export default function Reports() {
     }
   };
 
-  const handleDeleteReport = async (reportId: string) => {
-    if (!confirm("Tem certeza que deseja deletar este relatório? Esta ação não pode ser desfeita.")) {
-      return;
-    }
+  const handleDeleteReportClick = (report: ReportData) => {
+    setReportToDelete(report);
+    setShowDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!reportToDelete) return;
 
     try {
+      setDeletingReportId(reportToDelete.id);
+      
       const { error } = await supabase
         .from('relatorios_semanais')
         .delete()
-        .eq('id', reportId);
+        .eq('id', reportToDelete.id);
 
       if (error) {
         console.error('Delete error:', error);
@@ -245,6 +263,9 @@ export default function Reports() {
         title: "Sucesso",
         description: "Relatório deletado com sucesso",
       });
+      
+      setShowDeleteDialog(false);
+      setReportToDelete(null);
     } catch (error) {
       console.error('Delete error:', error);
       toast({
@@ -252,6 +273,8 @@ export default function Reports() {
         description: "Erro ao deletar relatório",
         variant: "destructive",
       });
+    } finally {
+      setDeletingReportId(null);
     }
   };
 
@@ -325,7 +348,8 @@ export default function Reports() {
           loading={loading}
           onViewReport={handleViewReport}
           onExportReport={handleExportReport}
-          onDeleteReport={handleDeleteReport}
+          onDeleteReport={handleDeleteReportClick}
+          deletingReportId={deletingReportId}
         />
 
         {/* Generate Report Dialog */}
@@ -335,6 +359,46 @@ export default function Reports() {
           onGenerate={handleGenerateReport}
           selectedUserId={selectedUserId}
         />
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+                Confirmar Exclusão
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja deletar este relatório?
+                {reportToDelete && (
+                  <div className="mt-2 p-3 bg-muted rounded-md">
+                    <p className="font-medium text-foreground">
+                      Período: {new Date(reportToDelete.data_inicio).toLocaleDateString('pt-BR')} até {new Date(reportToDelete.data_fim).toLocaleDateString('pt-BR')}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Criado em: {new Date(reportToDelete.criado_em).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                )}
+                <p className="mt-3 text-destructive font-medium">
+                  Esta ação não pode ser desfeita.
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={!!deletingReportId}>
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmDelete}
+                disabled={!!deletingReportId}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deletingReportId ? "Deletando..." : "Deletar Relatório"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
