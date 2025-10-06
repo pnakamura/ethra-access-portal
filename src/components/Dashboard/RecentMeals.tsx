@@ -4,9 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Utensils, Calendar, Flame, Apple, Wheat, Droplets } from 'lucide-react';
+import { ChevronDown, Utensils, Calendar, Flame, Apple, Wheat, Droplets, HelpCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { EmptyState } from "@/components/ui/empty-state";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface MealData {
   id: string;
@@ -167,10 +168,40 @@ export function RecentMeals({ userId }: RecentMealsProps) {
     <Card className="bg-card-dark border-primary/20">
       <CardHeader>
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <CardTitle className="flex items-center gap-2">
-            <Utensils className="h-5 w-5" />
-            Refeições do Dia
-          </CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
+              <Utensils className="h-5 w-5" />
+              Refeições do Dia
+            </CardTitle>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-6 w-6"
+                  aria-label="Ajuda sobre refeições do dia"
+                >
+                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="start">
+                <div className="space-y-2">
+                  <h4 className="font-medium leading-none">🍽️ Refeições do Dia</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Veja todas as refeições registradas em um dia específico com informações nutricionais detalhadas.
+                  </p>
+                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                    <li>Clique em uma refeição para ver detalhes completos</li>
+                    <li>Use o seletor de data para visualizar outros dias</li>
+                    <li>Análise IA mostra sugestões nutricionais</li>
+                  </ul>
+                  <p className="text-sm text-primary font-medium mt-2">
+                    💡 Registre suas refeições diariamente para melhor acompanhamento!
+                  </p>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
           <div className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-lg border">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <Input

@@ -508,6 +508,8 @@ export default function Dashboard() {
             metaPeso={dashboardData?.meta_peso}
             period={weightPeriod}
             onPeriodChange={handleWeightPeriodChange}
+            userId={selectedUserId}
+            onWeightAdded={handleRefresh}
           />
         </div>
 

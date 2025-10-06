@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Target, Save, Edit3 } from 'lucide-react';
+import { Target, Save, Edit3, HelpCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface GoalsConfigProps {
   userId: string;
@@ -83,10 +84,40 @@ export function GoalsConfig({ userId, currentGoals, onGoalsUpdate }: GoalsConfig
     <Card className="bg-card-dark border-primary/20">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            Configurar Metas
-          </CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              Configurar Metas
+            </CardTitle>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-6 w-6"
+                  aria-label="Ajuda sobre configurar metas"
+                >
+                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="start">
+                <div className="space-y-2">
+                  <h4 className="font-medium leading-none">🎯 Configurar Metas</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Defina suas metas personalizadas para acompanhar seu progresso:
+                  </p>
+                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                    <li><strong>Peso:</strong> Seu objetivo de peso corporal</li>
+                    <li><strong>Calorias:</strong> Meta diária de consumo calórico</li>
+                    <li><strong>Água:</strong> Meta de hidratação em ml por dia</li>
+                  </ul>
+                  <p className="text-sm text-primary font-medium mt-2">
+                    💡 Suas metas aparecem em todos os gráficos como linhas de referência!
+                  </p>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
           {!editing && (
             <Button 
               variant="outline" 

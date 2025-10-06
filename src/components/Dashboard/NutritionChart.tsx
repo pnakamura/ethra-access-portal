@@ -2,8 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, ReferenceLine, Area, AreaChart } from "recharts";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Activity, TrendingUp, Target } from "lucide-react";
+import { Activity, TrendingUp, Target, HelpCircle } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface NutritionData {
   data_registro: string;
@@ -107,10 +108,39 @@ export function NutritionChart({ data, period, onPeriodChange, metaCalorias = 20
     <Card className="bg-card-dark border-primary/20 col-span-2">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5" />
-            Evolução Nutricional
-          </CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Evolução Nutricional
+            </CardTitle>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-6 w-6"
+                  aria-label="Ajuda sobre evolução nutricional"
+                >
+                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="start">
+                <div className="space-y-2">
+                  <h4 className="font-medium leading-none">📈 Evolução Nutricional</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Visualize seu consumo de calorias e macronutrientes ao longo do tempo.
+                  </p>
+                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                    <li><strong>Gráfico de Calorias:</strong> Mostra seu consumo diário vs. sua meta</li>
+                    <li><strong>Gráfico de Macros:</strong> Distribuição de proteínas, carboidratos e gorduras</li>
+                  </ul>
+                  <p className="text-sm text-primary font-medium mt-2">
+                    💡 Dica: Use os botões "7 dias" e "30 dias" para ver períodos diferentes!
+                  </p>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
           <div className="flex gap-2">
             <Button 
               variant={period === "7d" ? "default" : "outline"}
