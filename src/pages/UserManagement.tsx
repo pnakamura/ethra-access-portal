@@ -59,6 +59,8 @@ export default function UserManagement() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editUserPassword, setEditUserPassword] = useState('');
+  const [editUserConfirmPassword, setEditUserConfirmPassword] = useState('');
   // Filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [tipoUsuarioFilter, setTipoUsuarioFilter] = useState('all');
@@ -266,6 +268,8 @@ export default function UserManagement() {
 
   const handleEdit = (usuario: Usuario) => {
     setEditingUsuario({ ...usuario });
+    setEditUserPassword('');
+    setEditUserConfirmPassword('');
     setIsEditDialogOpen(true);
   };
 
@@ -275,6 +279,27 @@ export default function UserManagement() {
     const isSocio = userProfile?.tipo_usuario === 'socio';
     const isGestor = userProfile?.tipo_usuario === 'gestor';
     const isOwnProfile = editingUsuario.id === user?.id;
+    
+    // Validate password if provided
+    if (editUserPassword || editUserConfirmPassword) {
+      if (editUserPassword !== editUserConfirmPassword) {
+        toast({
+          title: "Erro",
+          description: "As senhas não coincidem",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (editUserPassword.length < 6) {
+        toast({
+          title: "Erro",
+          description: "A senha deve ter pelo menos 6 caracteres",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
     
     // For profile mode (cliente/dependente), only allow editing own profile
     if (isProfileMode && !isOwnProfile) {
@@ -349,13 +374,54 @@ export default function UserManagement() {
 
       if (usuarioError) throw usuarioError;
 
+      // Update password if provided
+      if (editUserPassword) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          toast({
+            title: "Erro",
+            description: "Sessão expirada",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const response = await fetch(`https://jjpajouvaovffcfjjqkf.supabase.co/functions/v1/update-user-password`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: editingUsuario.id,
+            newPassword: editUserPassword
+          }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          console.error('Error updating password:', result);
+          toast({
+            title: "Erro",
+            description: result.error || "Erro ao atualizar senha",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
       toast({
         title: "Sucesso",
-        description: isProfileMode ? "Perfil atualizado com sucesso" : "Usuário atualizado com sucesso",
+        description: editUserPassword 
+          ? (isProfileMode ? "Perfil e senha atualizados com sucesso" : "Usuário e senha atualizados com sucesso")
+          : (isProfileMode ? "Perfil atualizado com sucesso" : "Usuário atualizado com sucesso"),
       });
 
       setIsEditDialogOpen(false);
       setEditingUsuario(null);
+      setEditUserPassword('');
+      setEditUserConfirmPassword('');
       
       if (isProfileMode) {
         // Reload user profile data
@@ -786,6 +852,42 @@ export default function UserManagement() {
                     }
                     className="col-span-3"
                   />
+                </div>
+
+                {/* Password update section */}
+                <div className="col-span-4 border-t pt-4 mt-2">
+                  <h4 className="text-sm font-medium mb-3">Alterar Senha (Opcional)</h4>
+                  <div className="grid gap-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="edit_new_password" className="text-right">
+                        Nova Senha
+                      </Label>
+                      <Input
+                        id="edit_new_password"
+                        type="password"
+                        value={editUserPassword}
+                        onChange={(e) => setEditUserPassword(e.target.value)}
+                        placeholder="Deixe em branco para não alterar"
+                        className="col-span-3"
+                      />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="edit_confirm_password" className="text-right">
+                        Confirmar Senha
+                      </Label>
+                      <Input
+                        id="edit_confirm_password"
+                        type="password"
+                        value={editUserConfirmPassword}
+                        onChange={(e) => setEditUserConfirmPassword(e.target.value)}
+                        placeholder="Confirme a nova senha"
+                        className="col-span-3"
+                      />
+                    </div>
+                    <div className="col-span-4 text-xs text-muted-foreground text-right">
+                      A senha deve ter pelo menos 6 caracteres.
+                    </div>
+                  </div>
                 </div>
                 
                 {/* Admin-only fields */}
