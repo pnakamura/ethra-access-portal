@@ -376,35 +376,40 @@ export default function UserManagement() {
 
       // Update password if provided
       if (editUserPassword) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
+        try {
+          const { data: functionData, error: functionError } = await supabase.functions.invoke(
+            'update-user-password',
+            {
+              body: {
+                userId: editingUsuario.id,
+                newPassword: editUserPassword
+              }
+            }
+          );
+
+          if (functionError) {
+            console.error('Error updating password:', functionError);
+            toast({
+              title: "Erro",
+              description: functionError.message || "Erro ao atualizar senha",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          if (!functionData?.success) {
+            toast({
+              title: "Erro",
+              description: functionData?.error || "Erro ao atualizar senha",
+              variant: "destructive",
+            });
+            return;
+          }
+        } catch (err) {
+          console.error('Error calling update password function:', err);
           toast({
             title: "Erro",
-            description: "Sessão expirada",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        const response = await fetch(`https://jjpajouvaovffcfjjqkf.supabase.co/functions/v1/update-user-password`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userId: editingUsuario.id,
-            newPassword: editUserPassword
-          }),
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          console.error('Error updating password:', result);
-          toast({
-            title: "Erro",
-            description: result.error || "Erro ao atualizar senha",
+            description: "Erro ao atualizar senha",
             variant: "destructive",
           });
           return;
