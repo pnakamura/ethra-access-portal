@@ -780,169 +780,176 @@ export default function UserManagement() {
 
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{isProfileMode ? "Editar Meu Perfil" : "Editar Usuário"}</DialogTitle>
             </DialogHeader>
             {editingUsuario && (
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="nome_completo" className="text-right">
-                    Nome Completo
-                  </Label>
-                  <Input
-                    id="nome_completo"
-                    value={editingUsuario.nome_completo || ''}
-                    onChange={(e) =>
-                      setEditingUsuario({
-                        ...editingUsuario,
-                        nome_completo: e.target.value,
-                      })
-                    }
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="email" className="text-right">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={editingUsuario.email || ''}
-                    onChange={(e) =>
-                      setEditingUsuario({
-                        ...editingUsuario,
-                        email: e.target.value,
-                      })
-                    }
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="celular" className="text-right">
-                    Celular
-                  </Label>
-                  <Input
-                    id="celular"
-                    value={editingUsuario.celular || ''}
-                    onChange={(e) =>
-                      setEditingUsuario({
-                        ...editingUsuario,
-                        celular: e.target.value,
-                      })
-                    }
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="peso_atual_kg" className="text-right">
-                    Peso Atual (kg)
-                  </Label>
-                  <Input
-                    id="peso_atual_kg"
-                    type="number"
-                    step="0.1"
-                    value={editingUsuario.peso_atual_kg || ''}
-                    onChange={(e) =>
-                      setEditingUsuario({
-                        ...editingUsuario,
-                        peso_atual_kg: e.target.value ? parseFloat(e.target.value) : null,
-                      })
-                    }
-                    className="col-span-3"
-                  />
+              <div className="space-y-6 py-4">
+                {/* Personal Information Section */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-foreground border-b pb-2">Informações Pessoais</h3>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="nome_completo">Nome Completo</Label>
+                    <Input
+                      id="nome_completo"
+                      value={editingUsuario.nome_completo || ''}
+                      onChange={(e) =>
+                        setEditingUsuario({
+                          ...editingUsuario,
+                          nome_completo: e.target.value,
+                        })
+                      }
+                      placeholder="Digite o nome completo"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={editingUsuario.email || ''}
+                        onChange={(e) =>
+                          setEditingUsuario({
+                            ...editingUsuario,
+                            email: e.target.value,
+                          })
+                        }
+                        placeholder="email@exemplo.com"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="celular">Celular</Label>
+                      <Input
+                        id="celular"
+                        value={editingUsuario.celular || ''}
+                        onChange={(e) =>
+                          setEditingUsuario({
+                            ...editingUsuario,
+                            celular: e.target.value,
+                          })
+                        }
+                        placeholder="(00) 00000-0000"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="peso_atual_kg">Peso Atual (kg)</Label>
+                    <Input
+                      id="peso_atual_kg"
+                      type="number"
+                      step="0.1"
+                      value={editingUsuario.peso_atual_kg || ''}
+                      onChange={(e) =>
+                        setEditingUsuario({
+                          ...editingUsuario,
+                          peso_atual_kg: e.target.value ? parseFloat(e.target.value) : null,
+                        })
+                      }
+                      placeholder="Ex: 75.5"
+                      className="max-w-xs"
+                    />
+                  </div>
                 </div>
 
-                {/* Password update section */}
-                <div className="col-span-4 border-t pt-4 mt-2">
-                  <h4 className="text-sm font-medium mb-3">Alterar Senha (Opcional)</h4>
-                  <div className="grid gap-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit_new_password" className="text-right">
-                        Nova Senha
-                      </Label>
+                {/* Password Update Section */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-foreground border-b pb-2">Alterar Senha (Opcional)</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit_new_password">Nova Senha</Label>
                       <Input
                         id="edit_new_password"
                         type="password"
                         value={editUserPassword}
                         onChange={(e) => setEditUserPassword(e.target.value)}
                         placeholder="Deixe em branco para não alterar"
-                        className="col-span-3"
                       />
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit_confirm_password" className="text-right">
-                        Confirmar Senha
-                      </Label>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="edit_confirm_password">Confirmar Nova Senha</Label>
                       <Input
                         id="edit_confirm_password"
                         type="password"
                         value={editUserConfirmPassword}
                         onChange={(e) => setEditUserConfirmPassword(e.target.value)}
                         placeholder="Confirme a nova senha"
-                        className="col-span-3"
                       />
                     </div>
-                    <div className="col-span-4 text-xs text-muted-foreground text-right">
-                      A senha deve ter pelo menos 6 caracteres.
-                    </div>
                   </div>
+
+                  {(editUserPassword || editUserConfirmPassword) && (
+                    <p className="text-xs text-muted-foreground">
+                      A senha deve ter pelo menos 6 caracteres.
+                    </p>
+                  )}
                 </div>
                 
                 {/* Admin-only fields */}
                 {!isProfileMode && (
-                  <>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="tipo_usuario" className="text-right">
-                        Tipo Usuário
-                      </Label>
-                      <select
-                        id="tipo_usuario"
-                        value={editingUsuario.tipo_usuario || ''}
-                        onChange={(e) =>
-                          setEditingUsuario({
-                            ...editingUsuario,
-                            tipo_usuario: e.target.value as 'cliente' | 'socio' | 'gestor' | 'dependente',
-                          })
-                        }
-                        className="col-span-3 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      >
-                        <option value="cliente">Cliente</option>
-                        <option value="dependente">Dependente</option>
-                        <option value="socio">Sócio</option>
-                        <option value="gestor">Gestor</option>
-                      </select>
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-foreground border-b pb-2">Configurações Administrativas</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="tipo_usuario">Tipo de Usuário</Label>
+                        <select
+                          id="tipo_usuario"
+                          value={editingUsuario.tipo_usuario || ''}
+                          onChange={(e) =>
+                            setEditingUsuario({
+                              ...editingUsuario,
+                              tipo_usuario: e.target.value as 'cliente' | 'socio' | 'gestor' | 'dependente',
+                            })
+                          }
+                          className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        >
+                          <option value="cliente">Cliente</option>
+                          <option value="dependente">Dependente</option>
+                          <option value="gestor">Gestor</option>
+                          <option value="socio">Sócio</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="plano_id">Plano</Label>
+                        <select
+                          id="plano_id"
+                          value={editingUsuario.plano_id || ''}
+                          onChange={(e) =>
+                            setEditingUsuario({
+                              ...editingUsuario,
+                              plano_id: e.target.value || null,
+                            })
+                          }
+                          className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        >
+                          <option value="">Sem plano</option>
+                          {planos.map((plano) => (
+                            <option key={plano.id} value={plano.id}>
+                              {plano.nome_plano} - R$ {plano.valor.toFixed(2)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="plano_id" className="text-right">
-                        Plano
-                      </Label>
-                      <select
-                        id="plano_id"
-                        value={editingUsuario.plano_id || ''}
-                        onChange={(e) =>
-                          setEditingUsuario({
-                            ...editingUsuario,
-                            plano_id: e.target.value || null,
-                          })
-                        }
-                        className="col-span-3 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      >
-                        <option value="">Sem plano</option>
-                        {planos.map((plano) => (
-                          <option key={plano.id} value={plano.id}>
-                            {plano.nome_plano} - R$ {plano.valor}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </>
+                  </div>
                 )}
               </div>
             )}
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => {
+                setIsEditDialogOpen(false);
+                setEditUserPassword('');
+                setEditUserConfirmPassword('');
+              }}>
                 Cancelar
               </Button>
               <Button onClick={handleSaveEdit}>Salvar Alterações</Button>
