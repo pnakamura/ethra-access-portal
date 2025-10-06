@@ -32,6 +32,7 @@ export function RecentMeals({ userId }: RecentMealsProps) {
   );
 
   useEffect(() => {
+    console.log('🍽️ RecentMeals useEffect - userId:', userId, 'selectedDate:', selectedDate);
     if (userId) {
       loadMealsForDate();
     }
