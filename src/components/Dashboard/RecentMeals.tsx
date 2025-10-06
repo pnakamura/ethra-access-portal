@@ -41,9 +41,9 @@ export function RecentMeals({ userId }: RecentMealsProps) {
     try {
       setLoading(true);
       
-      // Converter a data selecionada para UTC considerando o timezone local
-      const localStartDate = new Date(`${selectedDate}T00:00:00`);
-      const localEndDate = new Date(`${selectedDate}T23:59:59.999`);
+      // Buscar pela data UTC direta, igual ao gráfico faz
+      const startDateUTC = `${selectedDate}T00:00:00.000Z`;
+      const endDateUTC = `${selectedDate}T23:59:59.999Z`;
 
       const { data, error } = await supabase
         .from('informacoes_nutricionais')
@@ -60,8 +60,8 @@ export function RecentMeals({ userId }: RecentMealsProps) {
         `)
         .eq('usuario_id', userId)
         .is('deletado_em', null)
-        .gte('data_registro', localStartDate.toISOString())
-        .lte('data_registro', localEndDate.toISOString())
+        .gte('data_registro', startDateUTC)
+        .lte('data_registro', endDateUTC)
         .order('data_registro', { ascending: false });
 
       if (!error && data) {
