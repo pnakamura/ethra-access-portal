@@ -374,45 +374,65 @@ export default function UserManagement() {
 
       if (usuarioError) throw usuarioError;
 
-      // Update password if provided
+      // Update password if provided (using Auth Admin API for own password, edge function for others)
       if (editUserPassword) {
-        try {
-          const { data: functionData, error: functionError } = await supabase.functions.invoke(
-            'update-user-password',
-            {
-              body: {
-                userId: editingUsuario.id,
-                newPassword: editUserPassword
-              }
-            }
-          );
-
-          if (functionError) {
-            console.error('Error updating password:', functionError);
-            toast({
-              title: "Erro",
-              description: functionError.message || "Erro ao atualizar senha",
-              variant: "destructive",
-            });
-            return;
-          }
-
-          if (!functionData?.success) {
-            toast({
-              title: "Erro",
-              description: functionData?.error || "Erro ao atualizar senha",
-              variant: "destructive",
-            });
-            return;
-          }
-        } catch (err) {
-          console.error('Error calling update password function:', err);
-          toast({
-            title: "Erro",
-            description: "Erro ao atualizar senha",
-            variant: "destructive",
+        const isOwnPassword = editingUsuario.id === user?.id;
+        
+        if (isOwnPassword) {
+          // User can update their own password directly
+          const { error: passwordError } = await supabase.auth.updateUser({
+            password: editUserPassword
           });
-          return;
+          
+          if (passwordError) {
+            console.error('Error updating own password:', passwordError);
+            toast({
+              title: "Erro",
+              description: passwordError.message || "Erro ao atualizar senha",
+              variant: "destructive",
+            });
+            return;
+          }
+        } else {
+          // For updating other users' passwords, use edge function
+          try {
+            const { data: functionData, error: functionError } = await supabase.functions.invoke(
+              'update-user-password',
+              {
+                body: {
+                  userId: editingUsuario.id,
+                  newPassword: editUserPassword
+                }
+              }
+            );
+
+            if (functionError) {
+              console.error('Error updating password:', functionError);
+              toast({
+                title: "Erro",
+                description: functionError.message || "Erro ao atualizar senha",
+                variant: "destructive",
+              });
+              return;
+            }
+
+            if (!functionData?.success) {
+              toast({
+                title: "Erro",
+                description: functionData?.error || "Erro ao atualizar senha",
+                variant: "destructive",
+              });
+              return;
+            }
+          } catch (err) {
+            console.error('Error calling update password function:', err);
+            toast({
+              title: "Erro",
+              description: "Erro ao atualizar senha de outro usuário",
+              variant: "destructive",
+            });
+            return;
+          }
         }
       }
 
