@@ -12,6 +12,7 @@ import { ValidatedInput, PasswordStrengthIndicator } from '@/components/ui/form-
 import { successToast, errorToast } from '@/components/ui/enhanced-toast';
 import type { User, Session } from '@supabase/supabase-js';
 import { z } from 'zod';
+import ethraLogo from '@/assets/ethra-logo.png';
 
 // Validation schemas
 const emailSchema = z.string().email({ message: "Email inválido" }).trim();
@@ -387,11 +388,7 @@ const Auth = () => {
             <CardHeader className="text-center space-y-4">
               <div className="flex flex-col items-center justify-center">
                 <div className="mb-4">
-                  <svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <text x="0" y="30" className="fill-primary font-bold" style={{ fontSize: '32px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                      ETHRA
-                    </text>
-                  </svg>
+                  <img src={ethraLogo} alt="Ethra Logo" className="h-12 w-auto" />
                 </div>
                 <CardDescription className="text-muted-foreground">
                   Redefinir senha
@@ -487,11 +484,7 @@ const Auth = () => {
             <CardHeader className="text-center space-y-4">
               <div className="flex flex-col items-center justify-center">
                 <div className="mb-4">
-                  <svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <text x="0" y="30" className="fill-primary font-bold" style={{ fontSize: '32px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                      ETHRA
-                    </text>
-                  </svg>
+                  <img src={ethraLogo} alt="Ethra Logo" className="h-12 w-auto" />
                 </div>
                 <CardDescription className="text-muted-foreground">
                   Recuperação de senha
@@ -558,11 +551,7 @@ const Auth = () => {
           <CardHeader className="text-center space-y-4">
             <div className="flex flex-col items-center justify-center">
               <div className="mb-4">
-                <svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <text x="0" y="30" className="fill-primary font-bold" style={{ fontSize: '32px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                    ETHRA
-                  </text>
-                </svg>
+                <img src={ethraLogo} alt="Ethra Logo" className="h-12 w-auto" />
               </div>
               <CardDescription className="text-muted-foreground">
                 Sistema de acesso seguro
