@@ -65,27 +65,40 @@ const Auth = () => {
   useEffect(() => {
     // Check if this is a password recovery redirect
     const type = searchParams.get('type');
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const hashType = hashParams.get('type');
+    
+    // Check both query params and hash params (Supabase can use either)
+    const isRecovery = type === 'recovery' || hashType === 'recovery';
+    const accessToken = searchParams.get('access_token') || hashParams.get('access_token');
+    const refreshToken = searchParams.get('refresh_token') || hashParams.get('refresh_token');
 
-    if (type === 'recovery' && accessToken && refreshToken) {
-      // Set the session from URL parameters
-      supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      }).then(({ data, error }) => {
-        if (error) {
-          console.error('Error setting session from recovery:', error);
-          toast({
-            title: "Erro na recuperação",
-            description: "Link de recuperação inválido ou expirado.",
-            variant: "destructive",
-          });
-        } else {
-          console.log('Recovery session set successfully');
-          setShowPasswordReset(true);
-        }
-      });
+    if (isRecovery) {
+      console.log('Password recovery detected');
+      
+      if (accessToken && refreshToken) {
+        // Set the session from URL parameters
+        supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        }).then(({ data, error }) => {
+          if (error) {
+            console.error('Error setting session from recovery:', error);
+            errorToast(
+              "Erro na recuperação",
+              "Link de recuperação inválido ou expirado."
+            );
+          } else {
+            console.log('Recovery session set successfully');
+            setShowPasswordReset(true);
+          }
+        });
+      } else {
+        // If it's a recovery type but no tokens, show the reset form anyway
+        // as Supabase might have already set the session
+        setShowPasswordReset(true);
+      }
+      return;
     }
 
     // Set up auth state listener
@@ -97,14 +110,14 @@ const Auth = () => {
         setUser(session?.user ?? null);
         
         // Redirect authenticated users to home (except during password reset)
-        if (session?.user && !showPasswordReset) {
+        if (session?.user && !showPasswordReset && !isRecovery) {
           navigate('/');
         }
       }
     );
 
     // Check for existing session only if not a recovery
-    if (type !== 'recovery') {
+    if (!isRecovery) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         setSession(session);
         setUser(session?.user ?? null);
@@ -116,7 +129,7 @@ const Auth = () => {
     }
 
     return () => subscription.unsubscribe();
-  }, [navigate, searchParams, showPasswordReset]);
+  }, [navigate, searchParams, showPasswordReset, toast]);
 
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
