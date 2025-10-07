@@ -285,10 +285,9 @@ const Auth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate inputs
+    // Validate email only (password validation is for signup only)
     try {
       emailSchema.parse(email);
-      passwordSchema.parse(password);
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast({
@@ -298,6 +297,16 @@ const Auth = () => {
         });
         return;
       }
+    }
+    
+    // Basic password check
+    if (!password || password.length < 6) {
+      toast({
+        title: "Erro de validação",
+        description: "A senha deve ter pelo menos 6 caracteres.",
+        variant: "destructive",
+      });
+      return;
     }
     
     setIsLoading(true);
