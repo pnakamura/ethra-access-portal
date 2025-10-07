@@ -388,7 +388,7 @@ const Auth = () => {
             <CardHeader className="text-center space-y-4">
               <div className="flex flex-col items-center justify-center">
                 <div className="mb-4">
-                  <img src={ethraLogo} alt="Ethra Logo" className="h-12 w-auto" />
+                  <img src={ethraLogo} alt="Ethra Logo" className="h-48 w-auto" />
                 </div>
                 <CardDescription className="text-muted-foreground">
                   Redefinir senha
@@ -484,7 +484,7 @@ const Auth = () => {
             <CardHeader className="text-center space-y-4">
               <div className="flex flex-col items-center justify-center">
                 <div className="mb-4">
-                  <img src={ethraLogo} alt="Ethra Logo" className="h-12 w-auto" />
+                  <img src={ethraLogo} alt="Ethra Logo" className="h-48 w-auto" />
                 </div>
                 <CardDescription className="text-muted-foreground">
                   Recuperação de senha
@@ -551,7 +551,7 @@ const Auth = () => {
           <CardHeader className="text-center space-y-4">
             <div className="flex flex-col items-center justify-center">
               <div className="mb-4">
-                <img src={ethraLogo} alt="Ethra Logo" className="h-12 w-auto" />
+                <img src={ethraLogo} alt="Ethra Logo" className="h-48 w-auto" />
               </div>
               <CardDescription className="text-muted-foreground">
                 Sistema de acesso seguro
