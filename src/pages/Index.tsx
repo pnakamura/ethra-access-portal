@@ -175,32 +175,8 @@ const Index = () => {
   }
 
   if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-background via-muted/20 to-ethra/10">
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-background/40 backdrop-blur-sm" />
-        
-        {/* Content */}
-        <div className="relative z-10 text-center space-y-8">
-          <div className="flex items-center justify-center space-x-3">
-            <Shield className="h-12 w-12 text-ethra" />
-            <h1 className="text-4xl md:text-6xl font-bold bg-ethra-gradient bg-clip-text text-transparent">
-              Ethra
-            </h1>
-          </div>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Sistema de acesso seguro e portal de administração
-          </p>
-          <Button 
-            onClick={() => navigate('/auth')}
-            size="lg"
-            className="bg-ethra hover:bg-ethra/80 shadow-ethra-glow"
-          >
-            Acessar Sistema
-          </Button>
-        </div>
-      </div>
-    );
+    navigate('/auth');
+    return null;
   }
 
   return (
