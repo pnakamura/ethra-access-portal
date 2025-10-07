@@ -148,19 +148,22 @@ const Auth = () => {
           variant: "destructive",
         });
       } else {
-        toast({
-          title: "Senha redefinida com sucesso!",
-          description: "Sua nova senha foi salva. Você será redirecionado.",
-        });
+        successToast(
+          "Senha redefinida com sucesso!",
+          "Faça login com sua nova senha."
+        );
         
         // Clear form
         setNewPassword('');
         setConfirmNewPassword('');
         setShowPasswordReset(false);
         
-        // Redirect to home after a short delay
+        // Sign out the user to prevent automatic login
+        await supabase.auth.signOut();
+        
+        // Redirect to login after a short delay
         setTimeout(() => {
-          navigate('/');
+          navigate('/auth');
         }, 2000);
       }
     } catch (error) {
