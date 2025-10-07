@@ -286,18 +286,18 @@ export default function RedefinirSenha() {
 
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full bg-ethra hover:bg-ethra/90"
                 disabled={loading || password.length < 6}
               >
                 {loading ? (
                   <>
                     <span className="animate-spin mr-2">⏳</span>
-                    Redefinindo...
+                    Enviando...
                   </>
                 ) : (
                   <>
                     <CheckCircle2 className="h-4 w-4 mr-2" />
-                    Redefinir senha
+                    Enviar Nova Senha
                   </>
                 )}
               </Button>
