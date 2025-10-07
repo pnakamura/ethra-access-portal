@@ -6,12 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, EyeOff, Mail, Lock, User as UserIcon, Shield, ArrowLeft, Phone } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User as UserIcon, ArrowLeft, Phone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ValidatedInput, PasswordStrengthIndicator } from '@/components/ui/form-validation';
 import { successToast, errorToast } from '@/components/ui/enhanced-toast';
 import type { User, Session } from '@supabase/supabase-js';
-import ethraBg from '@/assets/ethra-bg.jpg';
 import { z } from 'zod';
 
 // Validation schemas
@@ -375,31 +374,29 @@ const Auth = () => {
 
   if (showPasswordReset) {
     return (
-      <div 
-        className="min-h-screen flex items-center justify-center relative overflow-hidden"
-        style={{
-          backgroundImage: `url(${ethraBg})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
-      >
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20">
+        {/* Decorative elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
+        </div>
         
         {/* Content */}
         <div className="relative z-10 w-full max-w-md p-6">
           <Card className="backdrop-blur-lg bg-glass border-glass shadow-ethra-glow">
             <CardHeader className="text-center space-y-4">
-              <div className="flex items-center justify-center space-x-2">
-                <Shield className="h-8 w-8 text-ethra" />
-                <CardTitle className="text-2xl md:text-3xl font-bold bg-ethra-gradient bg-clip-text text-transparent">
-                  Ethra
-                </CardTitle>
+              <div className="flex flex-col items-center justify-center">
+                <div className="mb-4">
+                  <svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <text x="0" y="30" className="fill-primary font-bold" style={{ fontSize: '32px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                      ETHRA
+                    </text>
+                  </svg>
+                </div>
+                <CardDescription className="text-muted-foreground">
+                  Redefinir senha
+                </CardDescription>
               </div>
-              <CardDescription className="text-muted-foreground">
-                Redefinir senha
-              </CardDescription>
             </CardHeader>
             
             <CardContent>
@@ -477,31 +474,29 @@ const Auth = () => {
 
   if (showForgotPassword) {
     return (
-      <div 
-        className="min-h-screen flex items-center justify-center relative overflow-hidden"
-        style={{
-          backgroundImage: `url(${ethraBg})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
-      >
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20">
+        {/* Decorative elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
+        </div>
         
         {/* Content */}
         <div className="relative z-10 w-full max-w-md p-6">
           <Card className="backdrop-blur-lg bg-glass border-glass shadow-ethra-glow">
             <CardHeader className="text-center space-y-4">
-              <div className="flex items-center justify-center space-x-2">
-                <Shield className="h-8 w-8 text-ethra" />
-                <CardTitle className="text-2xl md:text-3xl font-bold bg-ethra-gradient bg-clip-text text-transparent">
-                  Ethra
-                </CardTitle>
+              <div className="flex flex-col items-center justify-center">
+                <div className="mb-4">
+                  <svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <text x="0" y="30" className="fill-primary font-bold" style={{ fontSize: '32px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                      ETHRA
+                    </text>
+                  </svg>
+                </div>
+                <CardDescription className="text-muted-foreground">
+                  Recuperação de senha
+                </CardDescription>
               </div>
-              <CardDescription className="text-muted-foreground">
-                Recuperação de senha
-              </CardDescription>
             </CardHeader>
             
             <CardContent>
@@ -550,31 +545,29 @@ const Auth = () => {
   }
 
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center relative overflow-hidden"
-      style={{
-        backgroundImage: `url(${ethraBg})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
-    >
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20">
+      {/* Decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
+      </div>
       
       {/* Content */}
       <div className="relative z-10 w-full max-w-md p-6">
         <Card className="backdrop-blur-lg bg-glass border-glass shadow-ethra-glow">
           <CardHeader className="text-center space-y-4">
-              <div className="flex items-center justify-center space-x-2">
-                <Shield className="h-8 w-8 text-ethra" />
-                <CardTitle className="text-2xl md:text-3xl font-bold bg-ethra-gradient bg-clip-text text-transparent">
-                  Ethra
-                </CardTitle>
+            <div className="flex flex-col items-center justify-center">
+              <div className="mb-4">
+                <svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <text x="0" y="30" className="fill-primary font-bold" style={{ fontSize: '32px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                    ETHRA
+                  </text>
+                </svg>
               </div>
-            <CardDescription className="text-muted-foreground">
-              Sistema de acesso seguro
-            </CardDescription>
+              <CardDescription className="text-muted-foreground">
+                Sistema de acesso seguro
+              </CardDescription>
+            </div>
           </CardHeader>
           
           <CardContent>
