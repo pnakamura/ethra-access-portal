@@ -164,10 +164,12 @@ export default function RedefinirSenha() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
         <Card className="w-full max-w-md border-glass bg-glass/95 backdrop-blur-lg shadow-elegant">
             <CardHeader className="text-center">
-              <div className="mb-4">
-                <img src={ethraLogo} alt="Ethra Logo" className="h-48 w-auto" />
+              <div className="flex flex-col items-center justify-center">
+                <div className="mb-4">
+                  <img src={ethraLogo} alt="Ethra Logo" className="h-48 w-auto" />
+                </div>
+                <CardTitle className="text-2xl font-bold text-destructive">Link Inválido</CardTitle>
               </div>
-              <CardTitle className="text-2xl font-bold text-destructive">Link Inválido</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Alert variant="destructive">
@@ -200,8 +202,10 @@ export default function RedefinirSenha() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
       <Card className="w-full max-w-md border-glass bg-glass/95 backdrop-blur-lg shadow-elegant">
           <CardHeader className="space-y-4 text-center">
-            <div className="mb-4">
-              <img src={ethraLogo} alt="Ethra Logo" className="h-48 w-auto" />
+            <div className="flex flex-col items-center justify-center">
+              <div className="mb-4">
+                <img src={ethraLogo} alt="Ethra Logo" className="h-48 w-auto" />
+              </div>
             </div>
             <CardTitle className="text-2xl font-bold">Redefinir Senha</CardTitle>
             <CardDescription className="text-base">
