@@ -6,6 +6,7 @@ import { Shield, LogOut, Users, Info, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
+import ethraLogo from '@/assets/ethra-logo.png';
 
 const Index = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -188,10 +189,7 @@ const Index = () => {
       <header className="relative z-10 border-b border-glass bg-glass backdrop-blur-lg">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Shield className="h-6 w-6 text-ethra" />
-            <span className="text-xl font-bold bg-ethra-gradient bg-clip-text text-transparent">
-              Ethra
-            </span>
+            <img src={ethraLogo} alt="Ethra Logo" className="h-12 w-auto" />
           </div>
           <div className="flex items-center space-x-4">
             <span className="text-sm text-muted-foreground">
