@@ -312,8 +312,9 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
+      const loginEmail = email.trim().toLowerCase();
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: loginEmail,
         password,
       });
 
@@ -321,9 +322,11 @@ const Auth = () => {
         if (error.message.includes('Invalid login credentials')) {
           toast({
             title: "Credenciais inválidas",
-            description: "Email ou senha incorretos.",
+            description: "Email ou senha incorretos. Você pode tentar recuperar sua senha.",
             variant: "destructive",
           });
+          setShowForgotPassword(true);
+          setResetEmail(loginEmail);
         } else {
           toast({
             title: "Erro no login",
@@ -364,7 +367,7 @@ const Auth = () => {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/auth`,
+        redirectTo: `${window.location.origin}/redefinir-senha`,
       });
 
       if (error) {
