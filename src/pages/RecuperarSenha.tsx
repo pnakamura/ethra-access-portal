@@ -42,33 +42,11 @@ export default function RecuperarSenha() {
     setLoading(true);
 
     try {
-      // Verificar se o email existe no banco
-      const { data: userExists, error: checkError } = await supabase
-        .from('usuarios')
-        .select('email')
-        .eq('email', email.trim())
-        .maybeSingle();
-
-      if (checkError) {
-        console.error('Erro ao verificar email:', checkError);
-        setError('Erro ao verificar email. Tente novamente.');
-        setLoading(false);
-        return;
-      }
-
-      if (!userExists) {
-        // Por segurança, não informar que o email não existe
-        // Mostrar mensagem genérica de sucesso
-        setSuccess(true);
-        setLoading(false);
-        return;
-      }
-
-      // Enviar email de recuperação
+      // Enviar email de recuperação diretamente
       const redirectUrl = `${window.location.origin}/redefinir-senha`;
       
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-        email.trim(),
+        email.trim().toLowerCase(),
         {
           redirectTo: redirectUrl,
         }
@@ -81,10 +59,11 @@ export default function RecuperarSenha() {
         return;
       }
 
+      // Sempre mostrar sucesso por segurança, mesmo que o email não exista
       setSuccess(true);
       toast({
         title: "Email enviado!",
-        description: "Verifique sua caixa de entrada e spam.",
+        description: "Se o email estiver cadastrado, você receberá o link de recuperação.",
       });
     } catch (err) {
       console.error('Erro inesperado:', err);
