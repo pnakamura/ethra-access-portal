@@ -16,7 +16,12 @@ import ethraLogo from '@/assets/ethra-logo.png';
 
 // Validation schemas
 const emailSchema = z.string().email({ message: "Email inválido" }).trim();
-const passwordSchema = z.string().min(6, { message: "A senha deve ter pelo menos 6 caracteres" });
+const passwordSchema = z.string()
+  .min(8, { message: "A senha deve ter pelo menos 8 caracteres" })
+  .regex(/[A-Z]/, { message: "A senha deve conter pelo menos uma letra maiúscula" })
+  .regex(/[a-z]/, { message: "A senha deve conter pelo menos uma letra minúscula" })
+  .regex(/[0-9]/, { message: "A senha deve conter pelo menos um número" })
+  .regex(/[^A-Za-z0-9]/, { message: "A senha deve conter pelo menos um caractere especial" });
 const nameSchema = z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }).max(100, { message: "Nome muito longo" }).trim();
 const phoneSchema = z.string().regex(/^\(\d{2}\)\s\d{8,9}$/, { message: "Telefone inválido. Use o formato (XX) XXXXXXXXX" });
 
@@ -117,21 +122,24 @@ const Auth = () => {
     e.preventDefault();
     
     if (newPassword !== confirmNewPassword) {
-      toast({
-        title: "Erro de validação",
-        description: "As senhas não coincidem.",
-        variant: "destructive",
-      });
+      errorToast(
+        "Erro de validação",
+        "As senhas não coincidem."
+      );
       return;
     }
 
-    if (newPassword.length < 6) {
-      toast({
-        title: "Erro de validação",
-        description: "A senha deve ter pelo menos 6 caracteres.",
-        variant: "destructive",
-      });
-      return;
+    // Validate password strength
+    try {
+      passwordSchema.parse(newPassword);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        errorToast(
+          "Senha fraca",
+          error.errors[0].message
+        );
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -142,11 +150,10 @@ const Auth = () => {
       });
 
       if (error) {
-        toast({
-          title: "Erro na redefinição",
-          description: error.message,
-          variant: "destructive",
-        });
+        errorToast(
+          "Erro na redefinição",
+          error.message
+        );
       } else {
         successToast(
           "Senha redefinida com sucesso!",
@@ -167,11 +174,10 @@ const Auth = () => {
         }, 2000);
       }
     } catch (error) {
-      toast({
-        title: "Erro inesperado",
-        description: "Ocorreu um erro ao redefinir a senha. Tente novamente.",
-        variant: "destructive",
-      });
+      errorToast(
+        "Erro inesperado",
+        "Ocorreu um erro ao redefinir a senha. Tente novamente."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -413,7 +419,7 @@ const Auth = () => {
                       onChange={(e) => setNewPassword(e.target.value)}
                       className="pl-10 pr-10"
                       required
-                      minLength={6}
+                      minLength={8}
                     />
                     <button
                       type="button"
@@ -423,6 +429,10 @@ const Auth = () => {
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
+                  <PasswordStrengthIndicator password={newPassword} />
+                  <p className="text-xs text-muted-foreground">
+                    Mínimo 8 caracteres, com maiúsculas, minúsculas, números e símbolos
+                  </p>
                 </div>
                 
                 <div className="space-y-2">
@@ -437,7 +447,7 @@ const Auth = () => {
                       onChange={(e) => setConfirmNewPassword(e.target.value)}
                       className="pl-10"
                       required
-                      minLength={6}
+                      minLength={8}
                     />
                   </div>
                 </div>
