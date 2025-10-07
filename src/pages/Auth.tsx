@@ -639,7 +639,7 @@ const Auth = () => {
                 <Button
                   type="button"
                   variant="link"
-                  onClick={() => setShowForgotPassword(true)}
+                  onClick={() => navigate('/recuperar-senha')}
                   className="w-full text-sm text-muted-foreground hover:text-ethra"
                 >
                   Esqueci minha senha

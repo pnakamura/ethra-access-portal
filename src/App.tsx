@@ -10,6 +10,8 @@ import UserManagement from "./pages/UserManagement";
 import Dashboard from "./pages/Dashboard";
 import CreateDependent from "./pages/CreateDependent";
 import Reports from "./pages/Reports";
+import RecuperarSenha from "./pages/RecuperarSenha";
+import RedefinirSenha from "./pages/RedefinirSenha";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -40,6 +42,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<ErrorBoundary><Index /></ErrorBoundary>} />
             <Route path="/auth" element={<ErrorBoundary><Auth /></ErrorBoundary>} />
+            <Route path="/recuperar-senha" element={<ErrorBoundary><RecuperarSenha /></ErrorBoundary>} />
+            <Route path="/redefinir-senha" element={<ErrorBoundary><RedefinirSenha /></ErrorBoundary>} />
             <Route path="/users" element={<ErrorBoundary><UserManagement /></ErrorBoundary>} />
             <Route path="/dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
             <Route path="/create-dependent" element={<ErrorBoundary><CreateDependent /></ErrorBoundary>} />

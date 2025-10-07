@@ -1,0 +1,339 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Lock, Eye, EyeOff, CheckCircle2, AlertCircle, KeyRound } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import ethraLogo from '@/assets/ethra-logo.png';
+import ethraBg from '@/assets/ethra-bg.jpg';
+import { z } from 'zod';
+
+const passwordSchema = z.object({
+  password: z.string()
+    .min(8, "Senha deve ter no mínimo 8 caracteres")
+    .max(100, "Senha muito longa")
+    .regex(/[A-Z]/, "Senha deve conter ao menos uma letra maiúscula")
+    .regex(/[a-z]/, "Senha deve conter ao menos uma letra minúscula")
+    .regex(/[0-9]/, "Senha deve conter ao menos um número")
+    .regex(/[^A-Za-z0-9]/, "Senha deve conter ao menos um caractere especial"),
+});
+
+export default function RedefinirSenha() {
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [validatingToken, setValidatingToken] = useState(true);
+  const [tokenValid, setTokenValid] = useState(false);
+  const [error, setError] = useState('');
+  const [passwordStrength, setPasswordStrength] = useState<string[]>([]);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    validateRecoveryToken();
+  }, []);
+
+  const validateRecoveryToken = async () => {
+    setValidatingToken(true);
+    
+    try {
+      // Verificar se há tokens na URL (hash ou query params)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = searchParams.get('access_token') || hashParams.get('access_token');
+      const refreshToken = searchParams.get('refresh_token') || hashParams.get('refresh_token');
+      const type = searchParams.get('type') || hashParams.get('type');
+
+      if (type !== 'recovery') {
+        setError('Link de recuperação inválido ou ausente.');
+        setTokenValid(false);
+        setValidatingToken(false);
+        return;
+      }
+
+      if (accessToken && refreshToken) {
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (sessionError) {
+          console.error('Erro ao validar token:', sessionError);
+          setError('Link de recuperação expirado ou inválido.');
+          setTokenValid(false);
+        } else {
+          setTokenValid(true);
+        }
+      } else {
+        // Verificar se já há sessão ativa de recuperação
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setTokenValid(true);
+        } else {
+          setError('Link de recuperação inválido ou expirado.');
+          setTokenValid(false);
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao validar token:', err);
+      setError('Erro ao validar link de recuperação.');
+      setTokenValid(false);
+    } finally {
+      setValidatingToken(false);
+    }
+  };
+
+  const validatePasswordStrength = (pwd: string) => {
+    const checks: string[] = [];
+    
+    if (pwd.length >= 8) checks.push('8+ caracteres');
+    if (/[A-Z]/.test(pwd)) checks.push('Letra maiúscula');
+    if (/[a-z]/.test(pwd)) checks.push('Letra minúscula');
+    if (/[0-9]/.test(pwd)) checks.push('Número');
+    if (/[^A-Za-z0-9]/.test(pwd)) checks.push('Caractere especial');
+    
+    setPasswordStrength(checks);
+  };
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    validatePasswordStrength(value);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    // Validar senha
+    const validation = passwordSchema.safeParse({ password });
+    if (!validation.success) {
+      setError(validation.error.errors[0].message);
+      return;
+    }
+
+    // Validar confirmação
+    if (password !== confirmPassword) {
+      setError('As senhas não coincidem');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: password,
+      });
+
+      if (updateError) {
+        console.error('Erro ao atualizar senha:', updateError);
+        setError('Erro ao redefinir senha. Tente novamente.');
+        setLoading(false);
+        return;
+      }
+
+      // Fazer logout para não logar automaticamente
+      await supabase.auth.signOut();
+
+      toast({
+        title: "Senha redefinida com sucesso!",
+        description: "Faça login com sua nova senha.",
+      });
+
+      // Redirecionar para login
+      setTimeout(() => {
+        navigate('/auth');
+      }, 1500);
+      
+    } catch (err) {
+      console.error('Erro inesperado:', err);
+      setError('Erro inesperado. Tente novamente mais tarde.');
+      setLoading(false);
+    }
+  };
+
+  if (validatingToken) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ethra mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Validando link de recuperação...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!tokenValid) {
+    return (
+      <div className="min-h-screen relative overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${ethraBg})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/90 to-background/95 backdrop-blur-sm" />
+        
+        <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
+          <Card className="w-full max-w-md border-glass bg-glass/95 backdrop-blur-lg shadow-elegant">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4">
+                <img src={ethraLogo} alt="Ethra Logo" className="h-32 w-auto mx-auto" />
+              </div>
+              <CardTitle className="text-2xl font-bold text-destructive">Link Inválido</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+              
+              <div className="space-y-2">
+                <Button
+                  onClick={() => navigate('/recuperar-senha')}
+                  className="w-full"
+                >
+                  Solicitar novo link
+                </Button>
+                <Button
+                  onClick={() => navigate('/auth')}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Voltar para login
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen relative overflow-hidden">
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${ethraBg})` }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/90 to-background/95 backdrop-blur-sm" />
+      
+      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md border-glass bg-glass/95 backdrop-blur-lg shadow-elegant">
+          <CardHeader className="space-y-4 text-center">
+            <div className="mx-auto mb-4">
+              <img src={ethraLogo} alt="Ethra Logo" className="h-32 w-auto mx-auto" />
+            </div>
+            <CardTitle className="text-2xl font-bold">Redefinir Senha</CardTitle>
+            <CardDescription className="text-base">
+              Crie uma nova senha segura para sua conta
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Nova Senha</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Digite sua nova senha"
+                    value={password}
+                    onChange={(e) => handlePasswordChange(e.target.value)}
+                    className="pl-10 pr-10"
+                    required
+                    maxLength={100}
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                
+                {password && (
+                  <div className="mt-2 space-y-1">
+                    <p className="text-xs font-medium text-muted-foreground">Requisitos da senha:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {passwordStrength.map((check) => (
+                        <span
+                          key={check}
+                          className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-600 border border-green-500/20"
+                        >
+                          ✓ {check}
+                        </span>
+                      ))}
+                      {passwordStrength.length < 5 && (
+                        <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-600 border border-yellow-500/20">
+                          {5 - passwordStrength.length} pendente(s)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
+                <div className="relative">
+                  <KeyRound className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="Digite novamente a senha"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="pl-10 pr-10"
+                    required
+                    maxLength={100}
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading || passwordStrength.length < 5}
+              >
+                {loading ? (
+                  <>
+                    <span className="animate-spin mr-2">⏳</span>
+                    Redefinindo...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    Redefinir senha
+                  </>
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
