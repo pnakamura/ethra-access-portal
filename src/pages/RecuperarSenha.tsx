@@ -9,7 +9,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowLeft, Mail, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ethraLogo from '@/assets/ethra-logo.png';
-import ethraBg from '@/assets/ethra-bg.jpg';
 import { z } from 'zod';
 
 const emailSchema = z.object({
@@ -96,19 +95,8 @@ export default function RecuperarSenha() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Background Image */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${ethraBg})` }}
-      />
-      
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/90 to-background/95 backdrop-blur-sm" />
-      
-      {/* Content */}
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md border-glass bg-glass/95 backdrop-blur-lg shadow-elegant">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
+      <Card className="w-full max-w-md border-glass bg-glass/95 backdrop-blur-lg shadow-elegant">
           <CardHeader className="space-y-4 text-center">
             <div className="mx-auto mb-4">
               <img src={ethraLogo} alt="Ethra Logo" className="h-32 w-auto mx-auto" />
@@ -214,6 +202,5 @@ export default function RecuperarSenha() {
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
-}
+    );
+  }

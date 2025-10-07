@@ -9,17 +9,12 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Lock, Eye, EyeOff, CheckCircle2, AlertCircle, KeyRound } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ethraLogo from '@/assets/ethra-logo.png';
-import ethraBg from '@/assets/ethra-bg.jpg';
 import { z } from 'zod';
 
 const passwordSchema = z.object({
   password: z.string()
-    .min(8, "Senha deve ter no mínimo 8 caracteres")
-    .max(100, "Senha muito longa")
-    .regex(/[A-Z]/, "Senha deve conter ao menos uma letra maiúscula")
-    .regex(/[a-z]/, "Senha deve conter ao menos uma letra minúscula")
-    .regex(/[0-9]/, "Senha deve conter ao menos um número")
-    .regex(/[^A-Za-z0-9]/, "Senha deve conter ao menos um caractere especial"),
+    .min(6, "Senha deve ter no mínimo 6 caracteres")
+    .max(100, "Senha muito longa"),
 });
 
 export default function RedefinirSenha() {
@@ -92,11 +87,7 @@ export default function RedefinirSenha() {
   const validatePasswordStrength = (pwd: string) => {
     const checks: string[] = [];
     
-    if (pwd.length >= 8) checks.push('8+ caracteres');
-    if (/[A-Z]/.test(pwd)) checks.push('Letra maiúscula');
-    if (/[a-z]/.test(pwd)) checks.push('Letra minúscula');
-    if (/[0-9]/.test(pwd)) checks.push('Número');
-    if (/[^A-Za-z0-9]/.test(pwd)) checks.push('Caractere especial');
+    if (pwd.length >= 6) checks.push('6+ caracteres');
     
     setPasswordStrength(checks);
   };
@@ -170,15 +161,8 @@ export default function RedefinirSenha() {
 
   if (!tokenValid) {
     return (
-      <div className="min-h-screen relative overflow-hidden">
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${ethraBg})` }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/90 to-background/95 backdrop-blur-sm" />
-        
-        <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
-          <Card className="w-full max-w-md border-glass bg-glass/95 backdrop-blur-lg shadow-elegant">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
+        <Card className="w-full max-w-md border-glass bg-glass/95 backdrop-blur-lg shadow-elegant">
             <CardHeader className="text-center">
               <div className="mx-auto mb-4">
                 <img src={ethraLogo} alt="Ethra Logo" className="h-32 w-auto mx-auto" />
@@ -209,20 +193,12 @@ export default function RedefinirSenha() {
             </CardContent>
           </Card>
         </div>
-      </div>
     );
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${ethraBg})` }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/90 to-background/95 backdrop-blur-sm" />
-      
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md border-glass bg-glass/95 backdrop-blur-lg shadow-elegant">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
+      <Card className="w-full max-w-md border-glass bg-glass/95 backdrop-blur-lg shadow-elegant">
           <CardHeader className="space-y-4 text-center">
             <div className="mx-auto mb-4">
               <img src={ethraLogo} alt="Ethra Logo" className="h-32 w-auto mx-auto" />
@@ -267,23 +243,14 @@ export default function RedefinirSenha() {
                 </div>
                 
                 {password && (
-                  <div className="mt-2 space-y-1">
-                    <p className="text-xs font-medium text-muted-foreground">Requisitos da senha:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {passwordStrength.map((check) => (
-                        <span
-                          key={check}
-                          className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-600 border border-green-500/20"
-                        >
-                          ✓ {check}
-                        </span>
-                      ))}
-                      {passwordStrength.length < 5 && (
-                        <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-600 border border-yellow-500/20">
-                          {5 - passwordStrength.length} pendente(s)
-                        </span>
+                  <div className="mt-2">
+                    <p className="text-xs text-muted-foreground">
+                      {password.length >= 6 ? (
+                        <span className="text-green-600">✓ Mínimo 6 caracteres</span>
+                      ) : (
+                        <span>Mínimo 6 caracteres ({password.length}/6)</span>
                       )}
-                    </div>
+                    </p>
                   </div>
                 )}
               </div>
@@ -316,7 +283,7 @@ export default function RedefinirSenha() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={loading || passwordStrength.length < 5}
+                disabled={loading || password.length < 6}
               >
                 {loading ? (
                   <>
@@ -334,6 +301,5 @@ export default function RedefinirSenha() {
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
-}
+    );
+  }
