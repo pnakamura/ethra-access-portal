@@ -579,9 +579,6 @@ const Auth = () => {
               <div className="mb-4">
                 <img src={ethraLogo} alt="Ethra Logo" className="h-48 w-auto" />
               </div>
-              <CardDescription className="text-muted-foreground">
-                Sistema de acesso seguro
-              </CardDescription>
             </div>
           </CardHeader>
           
@@ -644,9 +641,6 @@ const Auth = () => {
                 >
                   Esqueci minha senha
                 </Button>
-                <p className="text-xs text-center text-muted-foreground">
-                  Cadastro agora é feito em Gerenciar Usuários (acesso para Sócios).
-                </p>
               </div>
             </form>
           </CardContent>
