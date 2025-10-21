@@ -67,6 +67,45 @@ Deno.serve(async (req) => {
 
     console.log('User authorized to create dependents')
 
+    // Check dependent limit based on user's plan
+    const { data: userWithPlan, error: planError } = await supabaseClient
+      .from('usuarios')
+      .select(`
+        plano_id,
+        planos:plano_id (
+          max_dependentes
+        )
+      `)
+      .eq('id', user.id)
+      .single()
+
+    if (planError) {
+      console.error('Error fetching user plan:', planError)
+      throw new Error('Error checking plan limits')
+    }
+
+    // Count current dependents
+    const { count: currentDependents, error: countError } = await supabaseClient
+      .from('vinculos_usuarios')
+      .select('*', { count: 'exact', head: true })
+      .eq('usuario_principal_id', user.id)
+      .eq('ativo', true)
+
+    if (countError) {
+      console.error('Error counting dependents:', countError)
+      throw new Error('Error checking current dependents')
+    }
+
+    // Check if limit is reached (null means unlimited)
+    const maxDependentes = userWithPlan.planos?.max_dependentes
+    if (maxDependentes !== null && maxDependentes !== undefined) {
+      if (currentDependents >= maxDependentes) {
+        throw new Error(`Limite de dependentes atingido. Seu plano permite ${maxDependentes} dependente(s).`)
+      }
+    }
+
+    console.log(`Current dependents: ${currentDependents}, Max allowed: ${maxDependentes || 'unlimited'}`)
+
     // Parse request body
     const { nomeCompleto, email, celular, password }: CreateDependentRequest = await req.json()
 

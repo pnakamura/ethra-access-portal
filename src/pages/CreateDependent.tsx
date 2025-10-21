@@ -23,6 +23,8 @@ export default function CreateDependent() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [currentDependents, setCurrentDependents] = useState(0);
+  const [maxDependents, setMaxDependents] = useState<number | null>(null);
   
   // Form fields
   const [nomeCompleto, setNomeCompleto] = useState('');
@@ -80,11 +82,54 @@ export default function CreateDependent() {
         navigate('/');
         return;
       }
+
+      // Load dependent limits and current count
+      await loadDependentStats(user.id);
     } catch (error) {
       console.error('Erro na verificação de autenticação:', error);
       navigate('/auth');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadDependentStats = async (userId: string) => {
+    try {
+      // Get user's plan and max dependents
+      const { data: userPlan, error: planError } = await supabase
+        .from('usuarios')
+        .select(`
+          plano_id,
+          planos:plano_id (
+            max_dependentes
+          )
+        `)
+        .eq('id', userId)
+        .single();
+
+      if (planError) {
+        console.error('Error loading plan:', planError);
+        return;
+      }
+
+      const max = (userPlan?.planos as any)?.max_dependentes ?? null;
+      setMaxDependents(max);
+
+      // Count current active dependents
+      const { count, error: countError } = await supabase
+        .from('vinculos_usuarios')
+        .select('*', { count: 'exact', head: true })
+        .eq('usuario_principal_id', userId)
+        .eq('ativo', true);
+
+      if (countError) {
+        console.error('Error counting dependents:', countError);
+        return;
+      }
+
+      setCurrentDependents(count || 0);
+    } catch (error) {
+      console.error('Error loading dependent stats:', error);
     }
   };
 
@@ -155,6 +200,11 @@ export default function CreateDependent() {
       setEmail('');
       setCelular('');
       setPassword('');
+
+      // Reload dependent stats
+      if (user) {
+        await loadDependentStats(user.id);
+      }
 
     } catch (error) {
       console.error('Erro ao criar dependente:', error);
@@ -245,6 +295,31 @@ export default function CreateDependent() {
               <UserPlus className="h-5 w-5" />
               Novo Dependente
             </CardTitle>
+            {maxDependents !== null && (
+              <div className="mt-4 p-4 bg-muted rounded-lg border border-border">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Dependentes:</span>
+                  <Badge variant={currentDependents >= maxDependents ? "destructive" : "secondary"}>
+                    {currentDependents} / {maxDependents}
+                  </Badge>
+                </div>
+                {currentDependents >= maxDependents && (
+                  <p className="text-sm text-destructive mt-2">
+                    ⚠️ Você atingiu o limite de dependentes do seu plano.
+                  </p>
+                )}
+              </div>
+            )}
+            {maxDependents === null && (
+              <div className="mt-4 p-4 bg-muted rounded-lg border border-border">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Dependentes:</span>
+                  <Badge variant="secondary">
+                    {currentDependents} / Ilimitado
+                  </Badge>
+                </div>
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <form onSubmit={handleCreateDependent} className="space-y-6">
@@ -300,7 +375,10 @@ export default function CreateDependent() {
                 >
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={creating}>
+                <Button 
+                  type="submit" 
+                  disabled={creating || (maxDependents !== null && currentDependents >= maxDependents)}
+                >
                   {creating ? 'Criando...' : 'Criar Dependente'}
                 </Button>
               </div>
