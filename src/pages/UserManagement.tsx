@@ -34,6 +34,7 @@ interface Usuario {
   nome_plano?: string | null;
   responsavel_nome?: string | null;
   responsavel_tipo?: 'gestor' | 'socio' | null;
+  status_assinatura?: 'ativa' | 'cancelada' | 'suspensa' | 'expirada' | null;
 }
 
 interface Plano {
@@ -174,20 +175,37 @@ export default function UserManagement() {
 
         if (vinculosError) throw vinculosError;
 
-        // Create a map for faster lookup
+        // Get assinaturas separately
+        const { data: assinaturas, error: assinaturasError } = await supabase
+          .from('assinaturas')
+          .select('usuario_id, status')
+          .order('criado_em', { ascending: false });
+
+        if (assinaturasError) console.error('Error loading assinaturas:', assinaturasError);
+
+        // Create maps for faster lookup
         const vinculosMap = new Map();
         vinculos?.forEach(vinculo => {
           vinculosMap.set(vinculo.usuario_id, vinculo);
         });
+
+        const assinaturasMap = new Map();
+        assinaturas?.forEach(assinatura => {
+          if (!assinaturasMap.has(assinatura.usuario_id)) {
+            assinaturasMap.set(assinatura.usuario_id, assinatura.status);
+          }
+        });
         
-        // Map the data to include nome_plano and responsavel info
+        // Map the data to include nome_plano, responsavel info, and status_assinatura
         const usuariosWithPlanos = usuarios?.map(usuario => {
           const vinculo = vinculosMap.get(usuario.id);
+          const statusAssinatura = assinaturasMap.get(usuario.id);
           return {
             ...usuario,
             nome_plano: usuario.planos?.nome_plano || null,
             responsavel_nome: vinculo?.responsavel?.nome_completo || null,
-            responsavel_tipo: vinculo?.responsavel?.tipo_usuario || null
+            responsavel_tipo: vinculo?.responsavel?.tipo_usuario || null,
+            status_assinatura: statusAssinatura || null
           };
         }) || [];
         
@@ -201,7 +219,7 @@ export default function UserManagement() {
           .eq('ativo', true);
         
         if (!vinculosError && userIds && userIds.length > 0) {
-          const ids = userIds.map(v => v.usuario_id);
+          const ids = [...userIds.map(v => v.usuario_id), currentProfile.id];
           const { data: usuarios, error: usuariosError } = await supabase
             .from('usuarios')
             .select(`
@@ -214,16 +232,36 @@ export default function UserManagement() {
             .order('atualizado_em', { ascending: false });
           
           if (usuariosError) throw usuariosError;
+
+          // Get assinaturas for these users
+          const { data: assinaturas, error: assinaturasError } = await supabase
+            .from('assinaturas')
+            .select('usuario_id, status')
+            .in('usuario_id', ids)
+            .order('criado_em', { ascending: false });
+
+          if (assinaturasError) console.error('Error loading assinaturas:', assinaturasError);
+
+          const assinaturasMap = new Map();
+          assinaturas?.forEach(assinatura => {
+            if (!assinaturasMap.has(assinatura.usuario_id)) {
+              assinaturasMap.set(assinatura.usuario_id, assinatura.status);
+            }
+          });
           
-          // Map the joined data to include nome_plano and add current user
-          const usuariosWithPlanos = usuarios?.map(usuario => ({
-            ...usuario,
-            nome_plano: usuario.planos?.nome_plano || null,
-            responsavel_nome: currentProfile.nome_completo,
-            responsavel_tipo: currentProfile.tipo_usuario as 'gestor'
-          })) || [];
+          // Map the joined data to include nome_plano, status_assinatura, and add current user
+          const usuariosWithPlanos = usuarios?.map(usuario => {
+            const statusAssinatura = assinaturasMap.get(usuario.id);
+            return {
+              ...usuario,
+              nome_plano: usuario.planos?.nome_plano || null,
+              responsavel_nome: usuario.id === currentProfile.id ? null : currentProfile.nome_completo,
+              responsavel_tipo: usuario.id === currentProfile.id ? null : currentProfile.tipo_usuario as 'gestor',
+              status_assinatura: statusAssinatura || null
+            };
+          }) || [];
           
-          setUsuarios([currentProfile, ...usuariosWithPlanos]);
+          setUsuarios(usuariosWithPlanos);
         } else {
           // No linked users, only show themselves
           setUsuarios([currentProfile]);

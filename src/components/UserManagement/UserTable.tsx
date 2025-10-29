@@ -15,6 +15,7 @@ interface Usuario {
   nome_plano?: string | null;
   responsavel_nome?: string | null;
   responsavel_tipo?: 'gestor' | 'socio' | null;
+  status_assinatura?: 'ativa' | 'cancelada' | 'suspensa' | 'expirada' | null;
 }
 
 interface UserTableProps {
@@ -26,7 +27,27 @@ interface UserTableProps {
   getRoleDisplayName: (tipoUsuario: string | null) => string;
 }
 
-export function UserTable({ 
+const getStatusBadgeVariant = (status: string | null): "default" | "secondary" | "destructive" | "outline" | "success" | "warning" => {
+  switch (status) {
+    case 'ativa': return 'success';
+    case 'suspensa': return 'warning';
+    case 'cancelada': return 'destructive';
+    case 'expirada': return 'outline';
+    default: return 'outline';
+  }
+};
+
+const getStatusDisplayName = (status: string | null): string => {
+  switch (status) {
+    case 'ativa': return 'Ativa';
+    case 'suspensa': return 'Suspensa';
+    case 'cancelada': return 'Cancelada';
+    case 'expirada': return 'Expirada';
+    default: return 'Sem assinatura';
+  }
+};
+
+export function UserTable({
   usuarios, 
   user, 
   onEdit, 
@@ -59,6 +80,7 @@ export function UserTable({
                     <TableHead>Função</TableHead>
                     <TableHead>Responsável</TableHead>
                     <TableHead>Plano</TableHead>
+                    <TableHead>Status Assinatura</TableHead>
                     <TableHead>Última Atualização</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -92,6 +114,11 @@ export function UserTable({
                         ) : (
                           <span className="text-muted-foreground">Sem plano</span>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusBadgeVariant(usuario.status_assinatura)}>
+                          {getStatusDisplayName(usuario.status_assinatura)}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         {usuario.atualizado_em ? new Date(usuario.atualizado_em).toLocaleDateString('pt-BR') : 'N/A'}
@@ -157,6 +184,13 @@ export function UserTable({
                         ) : (
                           <span className="text-muted-foreground">Sem plano</span>
                         )}
+                      </div>
+
+                      <div className="text-sm">
+                        <span className="text-muted-foreground">Status: </span>
+                        <Badge variant={getStatusBadgeVariant(usuario.status_assinatura)} className="text-xs">
+                          {getStatusDisplayName(usuario.status_assinatura)}
+                        </Badge>
                       </div>
                       
                       <div className="text-xs text-muted-foreground">
