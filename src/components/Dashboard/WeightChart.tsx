@@ -110,8 +110,8 @@ export function WeightChart({ data, metaPeso, period, onPeriodChange, userId, on
 
   return (
     <Card className="bg-card-dark border-primary/20">
-      <CardHeader>
-        <div className="flex items-center justify-between">
+      <CardHeader className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-2">
             <CardTitle>Evolução do Peso</CardTitle>
             <Popover>
@@ -143,7 +143,7 @@ export function WeightChart({ data, metaPeso, period, onPeriodChange, userId, on
               </PopoverContent>
             </Popover>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="default"
               size="sm"

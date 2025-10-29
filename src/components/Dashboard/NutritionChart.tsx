@@ -106,8 +106,8 @@ export function NutritionChart({ data, period, onPeriodChange, metaCalorias = 20
 
   return (
     <Card className="bg-card-dark border-primary/20 col-span-2">
-      <CardHeader>
-        <div className="flex items-center justify-between">
+      <CardHeader className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-2">
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5" />
@@ -141,7 +141,7 @@ export function NutritionChart({ data, period, onPeriodChange, metaCalorias = 20
               </PopoverContent>
             </Popover>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button 
               variant={period === "7d" ? "default" : "outline"}
               size="sm"
